@@ -44,8 +44,8 @@ export function CandidateDashboard() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-white" />
+              <div className="w-18 h-18  rounded-lg flex items-center justify-center">
+                 <img src="src\img\cropped-logo-supptic.png" alt="logo of supptic" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-primary">SUPPTIC</h1>
@@ -55,7 +55,8 @@ export function CandidateDashboard() {
             <div className="flex items-center gap-4">
               <div className="text-right hidden md:block">
                 <p className="text-sm font-medium">{candidate.name}</p>
-                <p className="text-xs text-muted-foreground">{candidate.candidateNumber}</p>
+                <p className="text-xs text-muted-foregroun
+                d">{candidate.candidateNumber}</p>
               </div>
               <Link to="/">
                 <Button variant="ghost" size="sm">

@@ -91,8 +91,8 @@ export function ApplicationFormPage() {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-white" />
+            <div className="w-18 h-18  rounded-lg flex items-center justify-center">
+               <img src="src\img\cropped-logo-supptic.png" alt="logo of supptic" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-primary">SUPPTIC Application Form</h1>

@@ -1,0 +1,194 @@
+// Plateforme d'inscription aux concours SUP'PTIC
+// Schéma Prisma — PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  CANDIDAT
+  AGENT
+  ADMIN
+}
+
+/// Filières avec montants associés (décisions ministérielles 2025)
+/// Licence session principale : ITT, IPT, TT, CPT          → 15 000 FCFA
+/// Licence alternance (Yaoundé uniquement) : ITT_ALT, IPT_ALT → 20 000 FCFA
+/// Master (Yaoundé uniquement) : IT, APT                   → 25 000 FCFA
+enum Filiere {
+  // Licence — session principale
+  ITT      // Ingénieurs des Travaux des Télécommunications
+  IPT      // Inspecteurs des Postes et Télécommunications
+  TT       // Techniciens des Télécommunications
+  CPT      // Contrôleurs des Postes et Télécommunications
+
+  // Licence — alternance (Yaoundé uniquement)
+  ITT_ALT  // ITT en alternance
+  IPT_ALT  // IPT en alternance
+
+  // Master (Yaoundé uniquement)
+  IT       // Ingénieurs des Télécommunications
+  APT      // Administrateurs des Postes et Télécommunications
+}
+
+/// Cycle de vie complet d'un dossier de candidature
+enum StatutDossier {
+  EN_ATTENTE  // Compte créé, formulaire en cours de saisie
+  SOUMIS      // Formulaire soumis + PDFs générés automatiquement
+  DEPOSE      // Dossier physique déposé dans un centre habilité
+  VALIDE      // Agent a vérifié et validé le dossier
+  REJETE      // Agent a rejeté le dossier (motif obligatoire)
+  ADMIS       // Candidat admis au concours
+}
+
+enum TypeDocument {
+  ACTE_NAISSANCE
+  DIPLOME
+  PHOTO_IDENTITE
+  CNI
+}
+
+enum TypePDF {
+  FICHE_CANDIDATURE  // Fiche récapitulative du candidat
+  RECEPISSE          // Récépissé pré-rempli à signer par l'agent
+}
+
+// ─────────────────────────────────────────────
+// MODÈLES
+// ─────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CANDIDAT)
+
+  // Relation candidature (1 user = 1 candidature max)
+  candidature  Candidature?
+
+  // Pour les agents : centre d'affectation
+  centreId     String?
+  centre       CentreDepot? @relation(fields: [centreId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Candidature {
+  id             String   @id @default(cuid())
+  /// Format : SUPP-2026-XXXXX (généré automatiquement)
+  numeroCandidat String   @unique
+
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ── Informations personnelles ──────────────────
+  nom            String
+  prenom         String
+  dateNaissance  DateTime
+  lieuNaissance  String
+  region         String
+  ville          String
+  nationalite    String   @default("Camerounaise")
+  telephone      String
+  email          String   // Dupliqué ici pour lisibilité dans les PDFs
+
+  // ── Informations académiques ───────────────────
+  typeDiplome    String   // "BAC" | "GCE_AL" | "EQUIVALENT"
+  serieBac       String?  // Obligatoire si BAC
+  anneeObtention Int
+  etablissement  String
+
+  // ── Filière et paiement ────────────────────────
+  filiere        Filiere
+  /// Calculé automatiquement selon la filière au moment de la soumission
+  montantPaye    Int
+
+  /// Numéro de reçu CAMPOST saisi par le candidat (paiement physique)
+  numeroRecuCampost String?
+
+  // ── Workflow dossier ───────────────────────────
+  statut         StatutDossier @default(EN_ATTENTE)
+
+  /// Centre de dépôt physique choisi par le candidat
+  centreDepotId  String?
+  centreDepot    CentreDepot?  @relation(fields: [centreDepotId], references: [id])
+  dateDepot      DateTime?     // Quand le candidat a déposé physiquement
+
+  /// Agent qui a traité le dossier
+  agentId        String?
+  dateValidation DateTime?
+  motifRejet     String?       // Obligatoire si statut = REJETE
+
+  // ── Relations ─────────────────────────────────
+  documents      Document[]
+  pdfsGeneres    PDFGenere[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("candidatures")
+}
+
+model Document {
+  id            String      @id @default(cuid())
+  candidatureId String
+  candidature   Candidature @relation(fields: [candidatureId], references: [id], onDelete: Cascade)
+
+  type          TypeDocument
+  nomFichier    String       // Nom original du fichier
+  cheminFichier String       // Chemin sur le serveur
+  tailleFichier Int          // En bytes
+  mimeType      String       // "application/pdf", "image/jpeg", etc.
+
+  uploadedAt    DateTime @default(now())
+
+  @@map("documents")
+}
+
+model PDFGenere {
+  id            String      @id @default(cuid())
+  candidatureId String
+  candidature   Candidature @relation(fields: [candidatureId], references: [id], onDelete: Cascade)
+
+  type          TypePDF
+  nomFichier    String
+  cheminFichier String
+
+  /// true = le candidat a téléchargé ce PDF au moins une fois
+  telecharge    Boolean  @default(false)
+
+  generatedAt   DateTime @default(now())
+
+  @@unique([candidatureId, type])
+  @@map("pdfs_generes")
+}
+
+/// Centres de dépôt physique habilités (ex. agences CAMPOST régionales)
+model CentreDepot {
+  id           String        @id @default(cuid())
+  nom          String
+  ville        String
+  region       String
+  adresse      String?
+  telephone    String?
+
+  agents       User[]
+  candidatures Candidature[]
+
+  actif        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@map("centres_depot")
+}
