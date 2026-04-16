@@ -95,14 +95,41 @@ export const authApi = {
 };
 
 // ─── Endpoints candidatures ───────────────────────────────────────────────────
+export interface CandidatureCreee {
+  id: string;
+  numeroCandidat: string;
+  statut: string;
+  filiere: string;
+  montantPaye: number;
+}
+
 export const candidatureApi = {
-  create: (data: FormData) =>
-    api.post<ApiOk<{ id: string; numeroCandidat: string }>>('/candidatures', data, {
+  /** Crée la candidature (champs texte uniquement — JSON) */
+  create: (data: Record<string, unknown>) =>
+    api.post<ApiOk<{ candidature: CandidatureCreee }>>('/candidatures', data),
+
+  /** Upload les pièces justificatives après création */
+  uploadDocuments: (candidatureId: string, files: FormData) =>
+    api.post(`/candidatures/${candidatureId}/documents`, files, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 
   me: () =>
     api.get<ApiOk<Record<string, unknown>>>('/candidatures/me'),
+};
+
+// ─── Endpoints centres de dépôt ───────────────────────────────────────────────
+export interface CentreDepot {
+  id: string;
+  nom: string;
+  ville: string;
+  region: string;
+  adresse: string;
+  telephone: string;
+}
+
+export const centresApi = {
+  list: () => api.get<ApiOk<CentreDepot[]>>('/centres'),
 };
 
 // ─── Endpoints agent ─────────────────────────────────────────────────────────
@@ -155,8 +182,8 @@ export const agentApi = {
 // ─── Endpoints PDF ────────────────────────────────────────────────────────────
 export const pdfApi = {
   ficheCandidature: (candidatureId: string) =>
-    api.get(`/pdf/fiche/${candidatureId}`, { responseType: 'blob' }),
+    api.get(`/pdf/${candidatureId}/fiche`, { responseType: 'blob' }),
 
   recepisse: (candidatureId: string) =>
-    api.get(`/pdf/recepisse/${candidatureId}`, { responseType: 'blob' }),
+    api.get(`/pdf/${candidatureId}/recepisse`, { responseType: 'blob' }),
 };

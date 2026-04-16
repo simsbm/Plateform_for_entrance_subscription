@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { User, Mail, Phone, Lock, ArrowLeft, AlertCircle } from 'lucide-react';
+import { User, Mail, Lock, ArrowLeft, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { authApi, saveAuth } from '../../lib/api';
 import axios from 'axios';
@@ -16,45 +16,37 @@ interface FieldErrors {
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [globalError, setGlobalError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [isLoading, setIsLoading]       = useState(false);
+  const [globalError, setGlobalError]   = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors]   = useState<FieldErrors>({});
+  const [email, setEmail]               = useState('');
+  const [password, setPassword]         = useState('');
+  const [confirmPassword, setConfirm]   = useState('');
 
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-  });
-
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Efface l'erreur du champ dès que l'utilisateur retape
-    if (field in fieldErrors) {
-      setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const clearFieldError = (field: keyof FieldErrors) =>
+    setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setGlobalError(null);
     setFieldErrors({});
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password.length < 8) {
+      setFieldErrors({ password: ['Le mot de passe doit contenir au moins 8 caractères'] });
+      return;
+    }
+    if (password !== confirmPassword) {
       setFieldErrors({ password: ['Les mots de passe ne correspondent pas'] });
       return;
     }
 
     setIsLoading(true);
     try {
-      const { data } = await authApi.register(formData.email, formData.password);
+      const { data } = await authApi.register(email, password);
       const { token, user } = data.data;
-
       saveAuth(token, user.role);
-      toast.success('Compte créé avec succès !');
-      navigate('/dashboard');
+      toast.success('Compte créé ! Complétez votre dossier de candidature.');
+      navigate('/apply');
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const body = err.response?.data;
@@ -78,20 +70,17 @@ export function RegisterPage() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <Link to="/" className="inline-flex items-center gap-3">
             <div className="w-18 h-18 rounded-lg flex items-center justify-center">
-              <img src="src\img\cropped-logo-supptic.png" alt="logo of supptic" />
+              <img src="src\img\cropped-logo-supptic.png" alt="logo de supptic" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-primary">SUPPTIC</h1>
-            </div>
+            <h1 className="text-lg font-bold text-primary">SUPPTIC</h1>
           </Link>
         </div>
       </div>
 
-      {/* Registration Form */}
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="max-w-md mx-auto px-6 py-12">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="w-4 h-4" />
-          Retour à l'accueil
+          Retour
         </Link>
 
         <Card className="shadow-xl">
@@ -101,45 +90,14 @@ export function RegisterPage() {
             </div>
             <CardTitle className="text-3xl">Créer un compte</CardTitle>
             <CardDescription>
-              Commencez votre inscription aux concours SUPPTIC
+              Étape 1 / 2 — Identifiants de connexion
             </CardDescription>
           </CardHeader>
+
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Prénom</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="firstName"
-                      placeholder="Votre prénom"
-                      value={formData.firstName}
-                      onChange={(e) => handleChange('firstName', e.target.value)}
-                      className="pl-10"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Nom</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="lastName"
-                      placeholder="Votre nom"
-                      value={formData.lastName}
-                      onChange={(e) => handleChange('lastName', e.target.value)}
-                      className="pl-10"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-              </div>
-
+              {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email">Adresse e-mail</Label>
                 <div className="relative">
@@ -147,12 +105,13 @@ export function RegisterPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="username@gmail.com"
-                    value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
+                    placeholder="vous@example.cm"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); clearFieldError('email'); }}
                     className={`pl-10 ${fieldErrors.email ? 'border-destructive' : ''}`}
                     required
                     disabled={isLoading}
+                    autoComplete="email"
                   />
                 </div>
                 {fieldErrors.email && (
@@ -160,62 +119,49 @@ export function RegisterPage() {
                 )}
               </div>
 
+              {/* Mot de passe */}
               <div className="space-y-2">
-                <Label htmlFor="phone">Numéro de téléphone</Label>
+                <Label htmlFor="password">Mot de passe</Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
                   <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+237 6XX XXX XXX"
-                    value={formData.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
+                    id="password"
+                    type="password"
+                    placeholder="8 caractères minimum"
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); }}
+                    className={`pl-10 ${fieldErrors.password ? 'border-destructive' : ''}`}
+                    required
+                    disabled={isLoading}
+                    autoComplete="new-password"
+                  />
+                </div>
+                {fieldErrors.password && (
+                  <p className="text-sm text-destructive">{fieldErrors.password[0]}</p>
+                )}
+              </div>
+
+              {/* Confirmation mot de passe */}
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Répétez le mot de passe"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirm(e.target.value)}
                     className="pl-10"
                     required
                     disabled={isLoading}
+                    autoComplete="new-password"
                   />
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="8 caractères minimum"
-                      value={formData.password}
-                      onChange={(e) => handleChange('password', e.target.value)}
-                      className={`pl-10 ${fieldErrors.password ? 'border-destructive' : ''}`}
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                  {fieldErrors.password && (
-                    <p className="text-sm text-destructive">{fieldErrors.password[0]}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Répétez le mot de passe"
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                      className="pl-10"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-              </div>
-
+              {/* Erreur globale */}
               {globalError && (
                 <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -223,15 +169,13 @@ export function RegisterPage() {
                 </div>
               )}
 
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  En créant un compte, vous acceptez nos Conditions d'utilisation et notre Politique de confidentialité.
-                </p>
-              </div>
-
               <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                {isLoading ? 'Création en cours...' : 'Créer mon compte'}
+                {isLoading ? 'Création en cours…' : 'Créer mon compte'}
               </Button>
+
+              <p className="text-xs text-center text-muted-foreground">
+                Après la création du compte, vous serez dirigé vers le formulaire de candidature.
+              </p>
 
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
@@ -241,6 +185,7 @@ export function RegisterPage() {
                   </Link>
                 </p>
               </div>
+
             </form>
           </CardContent>
         </Card>
