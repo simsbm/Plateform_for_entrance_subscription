@@ -7,6 +7,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Progress } from '../components/ui/progress';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { GraduationCap, User, BookOpen, FileUp, CreditCard, ChevronLeft, ChevronRight, Upload, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -32,6 +33,7 @@ export function ApplicationFormPage() {
     yearObtained: '',
     schoolName: '',
     // Program
+    trainingType: 'classique',
     program: '',
     // Documents
     documents: {
@@ -302,63 +304,116 @@ export function ApplicationFormPage() {
             {/* Step 3: Program Selection */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <h3 className="text-2xl font-bold mb-6">Choose Your Program</h3>
-                <RadioGroup value={formData.program} onValueChange={(value) => setFormData({ ...formData, program: value })}>
-                  <div className="space-y-4">
-                    <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
-                      <div className="flex items-start gap-4">
-                        <RadioGroupItem value="itt" id="itt" className="mt-1" />
-                        <div className="flex-1">
-                          <Label htmlFor="itt" className="text-lg font-bold cursor-pointer">
-                            ITT – Ingénieurs des Travaux des Télécommunications
-                          </Label>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Telecommunications Engineering (3 years) - Advanced training for telecommunications engineers
-                          </p>
+                <h3 className="text-2xl font-bold mb-2">Choisir Votre Formation</h3>
+                <Tabs
+                  value={formData.trainingType}
+                  onValueChange={(value) => setFormData({ ...formData, trainingType: value, program: '' })}
+                >
+                  <TabsList className="w-full mb-6">
+                    <TabsTrigger value="classique" className="flex-1">Formation Classique</TabsTrigger>
+                    <TabsTrigger value="alternante" className="flex-1">Formation Alternante</TabsTrigger>
+                  </TabsList>
+
+                  {/* Formation Classique */}
+                  <TabsContent value="classique">
+                    <RadioGroup
+                      value={formData.program}
+                      onValueChange={(value) => setFormData({ ...formData, program: value })}
+                    >
+                      <div className="space-y-4">
+                        <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
+                          <div className="flex items-start gap-4">
+                            <RadioGroupItem value="itt-classique" id="itt-classique" className="mt-1" />
+                            <div className="flex-1">
+                              <Label htmlFor="itt-classique" className="text-lg font-bold cursor-pointer">
+                                ITT – Ingénieurs des Travaux des Télécommunications
+                              </Label>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Génie des Télécommunications (3 ans) - Formation avancée pour ingénieurs en télécommunications
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
+                          <div className="flex items-start gap-4">
+                            <RadioGroupItem value="ipt-classique" id="ipt-classique" className="mt-1" />
+                            <div className="flex-1">
+                              <Label htmlFor="ipt-classique" className="text-lg font-bold cursor-pointer">
+                                IPT – Inspecteurs des Postes et Télécommunications
+                              </Label>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Inspection Postale et Télécoms (3 ans) - Formation professionnelle d'inspecteur
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
+                          <div className="flex items-start gap-4">
+                            <RadioGroupItem value="tt-classique" id="tt-classique" className="mt-1" />
+                            <div className="flex-1">
+                              <Label htmlFor="tt-classique" className="text-lg font-bold cursor-pointer">
+                                TT – Techniciens des Télécommunications
+                              </Label>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Technicien en Télécommunications (2 ans) - Formation technique pour les systèmes de télécommunications
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
+                          <div className="flex items-start gap-4">
+                            <RadioGroupItem value="cpt-classique" id="cpt-classique" className="mt-1" />
+                            <div className="flex-1">
+                              <Label htmlFor="cpt-classique" className="text-lg font-bold cursor-pointer">
+                                CPT – Contrôleurs des Postes et Télécommunications
+                              </Label>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Contrôleur Postal et Télécoms (2 ans) - Formation en gestion des opérations
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
-                      <div className="flex items-start gap-4">
-                        <RadioGroupItem value="ipt" id="ipt" className="mt-1" />
-                        <div className="flex-1">
-                          <Label htmlFor="ipt" className="text-lg font-bold cursor-pointer">
-                            IPT – Inspecteurs des Postes et Télécommunications
-                          </Label>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Postal and Telecommunications Inspection (3 years) - Professional inspector training
-                          </p>
+                    </RadioGroup>
+                  </TabsContent>
+
+                  {/* Formation Alternante */}
+                  <TabsContent value="alternante">
+                    <RadioGroup
+                      value={formData.program}
+                      onValueChange={(value) => setFormData({ ...formData, program: value })}
+                    >
+                      <div className="space-y-4">
+                        <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
+                          <div className="flex items-start gap-4">
+                            <RadioGroupItem value="itt-alternant" id="itt-alternant" className="mt-1" />
+                            <div className="flex-1">
+                              <Label htmlFor="itt-alternant" className="text-lg font-bold cursor-pointer">
+                                ITT – Ingénieurs des Travaux des Télécommunications
+                              </Label>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Génie des Télécommunications (3 ans) - Formation en alternance pour ingénieurs en télécommunications
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
+                          <div className="flex items-start gap-4">
+                            <RadioGroupItem value="ipt-alternant" id="ipt-alternant" className="mt-1" />
+                            <div className="flex-1">
+                              <Label htmlFor="ipt-alternant" className="text-lg font-bold cursor-pointer">
+                                IPT – Inspecteurs des Postes et Télécommunications
+                              </Label>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Inspection Postale et Télécoms (3 ans) - Formation en alternance d'inspecteur
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
-                      <div className="flex items-start gap-4">
-                        <RadioGroupItem value="tt" id="tt" className="mt-1" />
-                        <div className="flex-1">
-                          <Label htmlFor="tt" className="text-lg font-bold cursor-pointer">
-                            TT – Techniciens des Télécommunications
-                          </Label>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Telecommunications Technician (2 years) - Technical training for telecommunications systems
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="border rounded-lg p-6 hover:border-primary transition-colors cursor-pointer">
-                      <div className="flex items-start gap-4">
-                        <RadioGroupItem value="cpt" id="cpt" className="mt-1" />
-                        <div className="flex-1">
-                          <Label htmlFor="cpt" className="text-lg font-bold cursor-pointer">
-                            CPT – Contrôleurs des Postes et Télécommunications
-                          </Label>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Postal and Telecommunications Controller (2 years) - Operations management training
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </RadioGroup>
+                    </RadioGroup>
+                  </TabsContent>
+                </Tabs>
               </div>
             )}
 
