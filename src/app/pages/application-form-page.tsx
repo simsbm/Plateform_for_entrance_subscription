@@ -5,12 +5,12 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Progress } from '../components/ui/progress';
 import {
   GraduationCap, User, BookOpen, FileUp, Receipt,
   ChevronLeft, ChevronRight, Upload, CheckCircle,
   Download, Loader2, AlertCircle,
+  Wifi, Shield, Wrench, ClipboardList, Briefcase, Building2, Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { candidatureApi, centresApi, pdfApi } from '../../lib/api';
@@ -22,6 +22,84 @@ const MONTANTS: Record<string, number> = {
   ITT: 15000, IPT: 15000, TT: 15000, CPT: 15000,
   ITT_ALT: 20000, IPT_ALT: 20000,
   IT: 25000, APT: 25000,
+};
+
+// ─── Données filières pour l'étape 3 ─────────────────────────────────────────
+type FiliereItem = {
+  code: string;
+  nom: string;
+  desc: string;
+  duree: string;
+  Icon: React.ElementType;
+};
+type FiliereGroupe = {
+  titre: string;
+  montant: number;
+  badgeClass: string;
+  bgGroupe: string;
+  iconBg: string;
+  iconColor: string;
+  items: FiliereItem[];
+};
+
+const FILIERE_GROUPES: FiliereGroupe[] = [
+  {
+    titre: 'Cycle Licence ',
+    montant: 15000,
+    badgeClass: 'bg-green-100 text-green-700',
+    bgGroupe: 'bg-muted/30',
+    iconBg: 'bg-blue-100',
+    iconColor: 'text-blue-600',
+    items: [
+      { code: 'ITT', nom: "Ingénieurs des Travaux des Télécommunications",  desc: "Formation d'ingénieurs en télécommunications", duree: '3 ans', Icon: Wifi },
+      { code: 'IPT', nom: "Inspecteurs des Postes et Télécommunications",    desc: "Formation d'inspecteurs P&T",                 duree: '3 ans', Icon: Shield },
+      { code: 'TT',  nom: "Techniciens des Télécommunications",              desc: 'Formation de techniciens télécom',            duree: '2 ans', Icon: Wrench },
+      { code: 'CPT', nom: "Contrôleurs des Postes et Télécommunications",    desc: "Formation d'agents de contrôle P&T",          duree: '2 ans', Icon: ClipboardList },
+    ],
+  },
+  {
+    titre: 'Cycle Licence - Formation par alternance (Yaoundé uniquement)',
+    montant: 20000,
+    badgeClass: 'bg-orange-100 text-orange-700',
+    bgGroupe: 'bg-orange-50',
+    iconBg: 'bg-orange-100',
+    iconColor: 'text-orange-600',
+    items: [
+      { code: 'ITT_ALT', nom: "ITT — Ingénieurs des Travaux Télécommunications Alternance", desc: "Formation ITT en contrat d'alternance, Yaoundé uniquement", duree: '3 ans', Icon: Briefcase },
+      { code: 'IPT_ALT', nom: "IPT — Inspecteurs des Postes et Télécommunications Alternance", desc: "Formation IPT en contrat d'alternance, Yaoundé uniquement", duree: '3 ans', Icon: BookOpen },
+    ],
+  },
+  {
+    titre: 'Cycle Master (Yaoundé uniquement)',
+    montant: 25000,
+    badgeClass: 'bg-purple-100 text-purple-700',
+    bgGroupe: 'bg-purple-50',
+    iconBg: 'bg-purple-100',
+    iconColor: 'text-purple-600',
+    items: [
+      { code: 'IT',  nom: "Ingénieurs des Télécommunications",                desc: 'Formation Master en télécommunications, Yaoundé uniquement',  duree: '2 ans', Icon: GraduationCap },
+      { code: 'APT', nom: "Administrateurs des Postes et Télécommunications", desc: 'Formation Master en administration P&T, Yaoundé uniquement', duree: '2 ans', Icon: Building2 },
+    ],
+  },
+];
+
+// ─── Erreurs par champ ────────────────────────────────────────────────────────
+type FieldKey =
+  | 'prenom' | 'nom' | 'dateNaissance' | 'lieuNaissance'
+  | 'region' | 'ville' | 'nationalite' | 'telephone' | 'email'
+  | 'typeDiplome' | 'serieBac' | 'anneeObtention' | 'etablissement'
+  | 'filiere'
+  | 'centreDepotId'
+  | 'numeroRecuCampost';
+
+type FieldErrors = Partial<Record<FieldKey, string[]>>;
+
+const STEP_FIELDS: Record<number, FieldKey[]> = {
+  1: ['prenom', 'nom', 'dateNaissance', 'lieuNaissance', 'region', 'ville', 'nationalite', 'telephone', 'email'],
+  2: ['typeDiplome', 'serieBac', 'anneeObtention', 'etablissement'],
+  3: ['filiere'],
+  4: ['centreDepotId'],
+  5: ['numeroRecuCampost'],
 };
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -48,14 +126,15 @@ export function ApplicationFormPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitError, setSubmitError]   = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors]   = useState<FieldErrors>({});
 
   // État post-soumission
   const [submittedId,     setSubmittedId]     = useState<string | null>(null);
   const [submittedNumero, setSubmittedNumero] = useState('');
 
   // Centres de dépôt
-  const [centres, setCentres]       = useState<CentreDepot[]>([]);
+  const [centres, setCentres]               = useState<CentreDepot[]>([]);
   const [centresLoading, setCentresLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -94,14 +173,21 @@ export function ApplicationFormPage() {
   const montant = MONTANTS[formData.filiere] ?? 15000;
 
   const steps = [
-    { number: 1, title: 'Identité',     icon: User },
-    { number: 2, title: 'Académique',   icon: BookOpen },
-    { number: 3, title: 'Filière',      icon: GraduationCap },
-    { number: 4, title: 'Documents',    icon: FileUp },
-    { number: 5, title: 'Paiement',     icon: Receipt },
+    { number: 1, title: 'Identité',   icon: User },
+    { number: 2, title: 'Académique', icon: BookOpen },
+    { number: 3, title: 'Filière',    icon: GraduationCap },
+    { number: 4, title: 'Documents',  icon: FileUp },
+    { number: 5, title: 'Paiement',   icon: Receipt },
   ];
 
   const progress = (currentStep / 5) * 100;
+
+  // ─── Helpers erreurs ──────────────────────────────────────────────────────
+  const fe = (field: FieldKey) => fieldErrors[field]?.[0];
+  const clearFe = (field: FieldKey) =>
+    setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+  const errClass = (field: FieldKey) =>
+    fe(field) ? 'border-destructive focus-visible:ring-destructive' : '';
 
   const handleNext = () => {
     if (currentStep < 5) setCurrentStep((s) => (s + 1) as Step);
@@ -117,11 +203,13 @@ export function ApplicationFormPage() {
   // ─── Soumission ─────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!formData.numeroRecuCampost.trim()) {
-      toast.error('Veuillez saisir le numéro de reçu CAMPOST');
+      setFieldErrors({ numeroRecuCampost: ['Veuillez saisir le numéro de reçu CAMPOST'] });
       return;
     }
     setSubmitError(null);
+    setFieldErrors({});
     setIsSubmitting(true);
+
     try {
       // 1. Créer la candidature (JSON)
       const payload: Record<string, unknown> = {
@@ -161,14 +249,33 @@ export function ApplicationFormPage() {
       setSubmittedId(id);
       setSubmittedNumero(numeroCandidat);
       toast.success('Candidature soumise avec succès !');
+
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const body = err.response?.data;
-        const msg  = body?.message ?? 'Erreur lors de la soumission';
-        setSubmitError(msg);
-        toast.error(msg);
+
+        if (body?.errors) {
+          // Erreurs champ par champ → naviguer vers l'étape concernée
+          const errors = body.errors as FieldErrors;
+          setFieldErrors(errors);
+
+          const errorKeys = Object.keys(errors) as FieldKey[];
+          let targetStep: Step = 5;
+          for (let s = 1; s <= 5; s++) {
+            if (errorKeys.some((k) => STEP_FIELDS[s]?.includes(k))) {
+              targetStep = s as Step;
+              break;
+            }
+          }
+          setCurrentStep(targetStep);
+          toast.error('Veuillez corriger les erreurs dans le formulaire');
+        } else {
+          const msg = body?.message ?? 'Erreur lors de la soumission';
+          setSubmitError(msg);
+          toast.error(msg);
+        }
       } else {
-        setSubmitError('Erreur inattendue');
+        setSubmitError('Une erreur inattendue est survenue');
       }
     } finally {
       setIsSubmitting(false);
@@ -304,57 +411,78 @@ export function ApplicationFormPage() {
               <div className="space-y-6">
                 <h3 className="text-2xl font-bold mb-6">Informations personnelles</h3>
                 <div className="grid md:grid-cols-2 gap-6">
+
                   <div className="space-y-2">
                     <Label htmlFor="prenom">Prénom</Label>
-                    <Input id="prenom" value={formData.prenom}
-                      onChange={(e) => setFormData({ ...formData, prenom: e.target.value })} required />
+                    <Input id="prenom" value={formData.prenom} className={errClass('prenom')}
+                      onChange={(e) => { setFormData({ ...formData, prenom: e.target.value }); clearFe('prenom'); }} required />
+                    {fe('prenom') && <p className="text-sm text-destructive">{fe('prenom')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="nom">Nom</Label>
-                    <Input id="nom" value={formData.nom}
-                      onChange={(e) => setFormData({ ...formData, nom: e.target.value })} required />
+                    <Input id="nom" value={formData.nom} className={errClass('nom')}
+                      onChange={(e) => { setFormData({ ...formData, nom: e.target.value }); clearFe('nom'); }} required />
+                    {fe('nom') && <p className="text-sm text-destructive">{fe('nom')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="dateNaissance">Date de naissance</Label>
-                    <Input id="dateNaissance" type="date" value={formData.dateNaissance}
-                      onChange={(e) => setFormData({ ...formData, dateNaissance: e.target.value })} required />
+                    <Input id="dateNaissance" type="date" value={formData.dateNaissance} className={errClass('dateNaissance')}
+                      onChange={(e) => { setFormData({ ...formData, dateNaissance: e.target.value }); clearFe('dateNaissance'); }} required />
+                    {fe('dateNaissance') && <p className="text-sm text-destructive">{fe('dateNaissance')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="lieuNaissance">Lieu de naissance</Label>
-                    <Input id="lieuNaissance" value={formData.lieuNaissance}
-                      onChange={(e) => setFormData({ ...formData, lieuNaissance: e.target.value })} required />
+                    <Input id="lieuNaissance" value={formData.lieuNaissance} className={errClass('lieuNaissance')}
+                      onChange={(e) => { setFormData({ ...formData, lieuNaissance: e.target.value }); clearFe('lieuNaissance'); }} required />
+                    {fe('lieuNaissance') && <p className="text-sm text-destructive">{fe('lieuNaissance')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="region">Région</Label>
                     <Select value={formData.region}
-                      onValueChange={(v) => setFormData({ ...formData, region: v })}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner une région" /></SelectTrigger>
+                      onValueChange={(v) => { setFormData({ ...formData, region: v }); clearFe('region'); }}>
+                      <SelectTrigger className={errClass('region')}>
+                        <SelectValue placeholder="Sélectionner une région" />
+                      </SelectTrigger>
                       <SelectContent>
                         {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    {fe('region') && <p className="text-sm text-destructive">{fe('region')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="ville">Ville</Label>
-                    <Input id="ville" value={formData.ville}
-                      onChange={(e) => setFormData({ ...formData, ville: e.target.value })} required />
+                    <Input id="ville" value={formData.ville} className={errClass('ville')}
+                      onChange={(e) => { setFormData({ ...formData, ville: e.target.value }); clearFe('ville'); }} required />
+                    {fe('ville') && <p className="text-sm text-destructive">{fe('ville')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="nationalite">Nationalité</Label>
-                    <Input id="nationalite" value={formData.nationalite}
-                      onChange={(e) => setFormData({ ...formData, nationalite: e.target.value })} required />
+                    <Input id="nationalite" value={formData.nationalite} className={errClass('nationalite')}
+                      onChange={(e) => { setFormData({ ...formData, nationalite: e.target.value }); clearFe('nationalite'); }} required />
+                    {fe('nationalite') && <p className="text-sm text-destructive">{fe('nationalite')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="telephone">Téléphone</Label>
                     <Input id="telephone" type="tel" placeholder="+237 6XX XXX XXX"
-                      value={formData.telephone}
-                      onChange={(e) => setFormData({ ...formData, telephone: e.target.value })} required />
+                      value={formData.telephone} className={errClass('telephone')}
+                      onChange={(e) => { setFormData({ ...formData, telephone: e.target.value }); clearFe('telephone'); }} required />
+                    {fe('telephone') && <p className="text-sm text-destructive">{fe('telephone')}</p>}
                   </div>
+
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="email">Adresse e-mail</Label>
-                    <Input id="email" type="email" value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+                    <Input id="email" type="email" value={formData.email} className={errClass('email')}
+                      onChange={(e) => { setFormData({ ...formData, email: e.target.value }); clearFe('email'); }} required />
+                    {fe('email') && <p className="text-sm text-destructive">{fe('email')}</p>}
                   </div>
+
                 </div>
               </div>
             )}
@@ -364,23 +492,30 @@ export function ApplicationFormPage() {
               <div className="space-y-6">
                 <h3 className="text-2xl font-bold mb-6">Informations académiques</h3>
                 <div className="space-y-6">
+
                   <div className="space-y-2">
                     <Label>Type de diplôme</Label>
                     <Select value={formData.typeDiplome}
-                      onValueChange={(v) => setFormData({ ...formData, typeDiplome: v as typeof formData.typeDiplome })}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner un type de diplôme" /></SelectTrigger>
+                      onValueChange={(v) => { setFormData({ ...formData, typeDiplome: v as typeof formData.typeDiplome }); clearFe('typeDiplome'); }}>
+                      <SelectTrigger className={errClass('typeDiplome')}>
+                        <SelectValue placeholder="Sélectionner un type de diplôme" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="BAC">Baccalauréat</SelectItem>
                         <SelectItem value="GCE_AL">GCE Advanced Level</SelectItem>
                         <SelectItem value="EQUIVALENT">Diplôme équivalent</SelectItem>
                       </SelectContent>
                     </Select>
+                    {fe('typeDiplome') && <p className="text-sm text-destructive">{fe('typeDiplome')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label>Série du Baccalauréat</Label>
                     <Select value={formData.serieBac}
-                      onValueChange={(v) => setFormData({ ...formData, serieBac: v })}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner une série" /></SelectTrigger>
+                      onValueChange={(v) => { setFormData({ ...formData, serieBac: v }); clearFe('serieBac'); }}>
+                      <SelectTrigger className={errClass('serieBac')}>
+                        <SelectValue placeholder="Sélectionner une série" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="C">Série C (Mathématiques & Physique)</SelectItem>
                         <SelectItem value="D">Série D (Mathématiques & Sciences Naturelles)</SelectItem>
@@ -389,19 +524,25 @@ export function ApplicationFormPage() {
                         <SelectItem value="A">Série A (Lettres)</SelectItem>
                       </SelectContent>
                     </Select>
+                    {fe('serieBac') && <p className="text-sm text-destructive">{fe('serieBac')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="anneeObtention">Année d'obtention</Label>
                     <Input id="anneeObtention" type="number" min="2000" max="2026"
-                      value={formData.anneeObtention}
-                      onChange={(e) => setFormData({ ...formData, anneeObtention: e.target.value })} required />
+                      value={formData.anneeObtention} className={errClass('anneeObtention')}
+                      onChange={(e) => { setFormData({ ...formData, anneeObtention: e.target.value }); clearFe('anneeObtention'); }} required />
+                    {fe('anneeObtention') && <p className="text-sm text-destructive">{fe('anneeObtention')}</p>}
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="etablissement">Établissement d'obtention</Label>
                     <Input id="etablissement" placeholder="Nom de l'établissement"
-                      value={formData.etablissement}
-                      onChange={(e) => setFormData({ ...formData, etablissement: e.target.value })} required />
+                      value={formData.etablissement} className={errClass('etablissement')}
+                      onChange={(e) => { setFormData({ ...formData, etablissement: e.target.value }); clearFe('etablissement'); }} required />
+                    {fe('etablissement') && <p className="text-sm text-destructive">{fe('etablissement')}</p>}
                   </div>
+
                 </div>
               </div>
             )}
@@ -409,66 +550,102 @@ export function ApplicationFormPage() {
             {/* ── Étape 3 : Choix de la filière ── */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <h3 className="text-2xl font-bold mb-6">Choix de la filière</h3>
-                <RadioGroup value={formData.filiere}
-                  onValueChange={(v) => setFormData({ ...formData, filiere: v })}>
+                <h3 className="text-2xl font-bold">Choix de la filière</h3>
 
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Licence — Session principale (15 000 FCFA)
-                  </p>
-                  {[
-                    { value: 'ITT', label: 'ITT — Ingénieurs des Travaux des Télécommunications', desc: "Formation d'ingénieurs en télécommunications (3 ans)" },
-                    { value: 'IPT', label: 'IPT — Inspecteurs des Postes et Télécommunications', desc: "Formation d'inspecteurs P&T (3 ans)" },
-                    { value: 'TT',  label: 'TT — Techniciens des Télécommunications', desc: 'Formation de techniciens télécom (2 ans)' },
-                    { value: 'CPT', label: 'CPT — Contrôleurs des Postes et Télécommunications', desc: "Formation d'agents de contrôle P&T (2 ans)" },
-                  ].map(({ value, label, desc }) => (
-                    <div key={value} className="border rounded-lg p-5 hover:border-primary transition-colors cursor-pointer">
-                      <div className="flex items-start gap-4">
-                        <RadioGroupItem value={value} id={value} className="mt-1" />
-                        <div className="flex-1">
-                          <Label htmlFor={value} className="text-base font-bold cursor-pointer">{label}</Label>
-                          <p className="text-sm text-muted-foreground mt-1">{desc}</p>
-                        </div>
+                {fe('filiere') && (
+                  <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{fe('filiere')}</span>
+                  </div>
+                )}
+
+                {FILIERE_GROUPES.map((groupe) => (
+                  <div key={groupe.titre} className={`rounded-xl p-5 space-y-4 ${groupe.bgGroupe}`}>
+
+                    {/* En-tête du groupe */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-sm font-semibold text-foreground">{groupe.titre}</h4>
+                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${groupe.badgeClass}`}>
+                        {groupe.montant.toLocaleString('fr-FR')} FCFA
+                      </span>
+                    </div>
+
+                    {/* Grille 2 colonnes desktop / 1 mobile */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {groupe.items.map(({ code, nom, desc, duree, Icon }) => {
+                        const isSelected = formData.filiere === code;
+                        return (
+                          <div
+                            key={code}
+                            onClick={() => { setFormData({ ...formData, filiere: code }); clearFe('filiere'); }}
+                            className={[
+                              'relative rounded-xl border-2 p-4 cursor-pointer transition-all duration-150 select-none bg-white',
+                              isSelected
+                                ? 'border-primary shadow-md'
+                                : 'border-border hover:border-primary/50 hover:shadow-sm',
+                            ].join(' ')}
+                          >
+                            {/* Coche de sélection */}
+                            {isSelected && (
+                              <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                                <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                              </div>
+                            )}
+
+                            <div className="flex gap-3">
+                              {/* Icône */}
+                              <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${groupe.iconBg}`}>
+                                <Icon className={`w-5 h-5 ${groupe.iconColor}`} />
+                              </div>
+
+                              <div className="flex-1 min-w-0 pr-4">
+                                {/* Code badge + durée */}
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                                    {code}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">{duree}</span>
+                                </div>
+
+                                {/* Nom complet */}
+                                <p className="text-sm font-semibold leading-snug">{nom}</p>
+
+                                {/* Description */}
+                                <p className="text-xs text-muted-foreground mt-1">{desc}</p>
+
+                                {/* Montant */}
+                                <p className="text-sm font-bold text-green-600 mt-2">
+                                  {groupe.montant.toLocaleString('fr-FR')} FCFA
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Récapitulatif filière sélectionnée */}
+                {formData.filiere && (
+                  <div className="flex items-center justify-between gap-4 p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Filière sélectionnée</p>
+                        <p className="font-semibold text-primary">{formData.filiere}</p>
                       </div>
                     </div>
-                  ))}
-
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pt-2">
-                    Licence Alternance — Yaoundé uniquement (20 000 FCFA)
-                  </p>
-                  {[
-                    { value: 'ITT_ALT', label: 'ITT Alternance', desc: 'ITT en contrat d\'alternance — Yaoundé uniquement' },
-                    { value: 'IPT_ALT', label: 'IPT Alternance', desc: 'IPT en contrat d\'alternance — Yaoundé uniquement' },
-                  ].map(({ value, label, desc }) => (
-                    <div key={value} className="border rounded-lg p-5 hover:border-primary transition-colors cursor-pointer">
-                      <div className="flex items-start gap-4">
-                        <RadioGroupItem value={value} id={value} className="mt-1" />
-                        <div className="flex-1">
-                          <Label htmlFor={value} className="text-base font-bold cursor-pointer">{label}</Label>
-                          <p className="text-sm text-muted-foreground mt-1">{desc}</p>
-                        </div>
-                      </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">Frais à verser à la CAMPOST</p>
+                      <p className="text-xl font-bold text-green-600">
+                        {(MONTANTS[formData.filiere] ?? 0).toLocaleString('fr-FR')} FCFA
+                      </p>
                     </div>
-                  ))}
-
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pt-2">
-                    Master — Yaoundé uniquement (25 000 FCFA)
-                  </p>
-                  {[
-                    { value: 'IT',  label: 'IT — Ingénieurs des Télécommunications (Master)', desc: 'Formation Master en télécommunications — Yaoundé uniquement' },
-                    { value: 'APT', label: 'APT — Administrateurs des Postes et Télécommunications (Master)', desc: 'Formation Master en administration P&T — Yaoundé uniquement' },
-                  ].map(({ value, label, desc }) => (
-                    <div key={value} className="border rounded-lg p-5 hover:border-primary transition-colors cursor-pointer">
-                      <div className="flex items-start gap-4">
-                        <RadioGroupItem value={value} id={value} className="mt-1" />
-                        <div className="flex-1">
-                          <Label htmlFor={value} className="text-base font-bold cursor-pointer">{label}</Label>
-                          <p className="text-sm text-muted-foreground mt-1">{desc}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </RadioGroup>
+                  </div>
+                )}
               </div>
             )}
 
@@ -480,10 +657,10 @@ export function ApplicationFormPage() {
                 {/* Documents */}
                 <div className="space-y-4">
                   {([
-                    { field: 'ACTE_NAISSANCE' as const, label: 'Acte de naissance',           accept: '.pdf,.jpg,.png' },
-                    { field: 'DIPLOME'         as const, label: 'Diplôme du Baccalauréat',     accept: '.pdf,.jpg,.png' },
-                    { field: 'PHOTO_IDENTITE'  as const, label: 'Photo d\'identité (4×4)',      accept: '.jpg,.png' },
-                    { field: 'CNI'             as const, label: 'Carte Nationale d\'Identité', accept: '.pdf,.jpg,.png' },
+                    { field: 'ACTE_NAISSANCE' as const, label: "Acte de naissance",           accept: '.pdf,.jpg,.png' },
+                    { field: 'DIPLOME'         as const, label: "Diplôme du Baccalauréat",     accept: '.pdf,.jpg,.png' },
+                    { field: 'PHOTO_IDENTITE'  as const, label: "Photo d'identité (4×4)",      accept: '.jpg,.png' },
+                    { field: 'CNI'             as const, label: "Carte Nationale d'Identité",  accept: '.pdf,.jpg,.png' },
                   ]).map(({ field, label, accept }) => (
                     <div key={field}
                       className="border-2 border-dashed rounded-lg p-5 hover:border-primary transition-colors">
@@ -531,10 +708,10 @@ export function ApplicationFormPage() {
                   </p>
                   <Select
                     value={formData.centreDepotId}
-                    onValueChange={(v) => setFormData({ ...formData, centreDepotId: v })}
+                    onValueChange={(v) => { setFormData({ ...formData, centreDepotId: v }); clearFe('centreDepotId'); }}
                     disabled={centresLoading}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={errClass('centreDepotId')}>
                       <SelectValue placeholder={centresLoading ? 'Chargement…' : 'Sélectionner un centre'} />
                     </SelectTrigger>
                     <SelectContent>
@@ -545,6 +722,7 @@ export function ApplicationFormPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {fe('centreDepotId') && <p className="text-sm text-destructive">{fe('centreDepotId')}</p>}
                 </div>
               </div>
             )}
@@ -590,16 +768,18 @@ export function ApplicationFormPage() {
                   <Input
                     id="numeroRecuCampost"
                     value={formData.numeroRecuCampost}
-                    onChange={(e) => setFormData({ ...formData, numeroRecuCampost: e.target.value })}
+                    className={errClass('numeroRecuCampost')}
+                    onChange={(e) => { setFormData({ ...formData, numeroRecuCampost: e.target.value }); clearFe('numeroRecuCampost'); }}
                     placeholder="Ex : 0012345678"
                     required
                   />
+                  {fe('numeroRecuCampost') && <p className="text-sm text-destructive">{fe('numeroRecuCampost')}</p>}
                   <p className="text-xs text-muted-foreground">
                     Ce numéro figure sur le reçu remis par l'agent CAMPOST lors de votre versement.
                   </p>
                 </div>
 
-                {/* Erreur de soumission */}
+                {/* Erreur globale de soumission */}
                 {submitError && (
                   <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />

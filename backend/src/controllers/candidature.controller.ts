@@ -32,7 +32,7 @@ const CandidatureSchema = z.object({
   numeroRecuCampost: z.string().min(5, 'Numéro de reçu CAMPOST invalide'),
 
   // Centre de dépôt choisi
-  centreDepotId: z.string().cuid('ID de centre invalide'),
+  centreDepotId: z.string().min(1, 'Centre de dépôt requis'),
 });
 
 // ─── Générateur de numéro candidat ────────────────────────────────────────────
@@ -152,7 +152,7 @@ export async function uploadDocuments(req: Request, res: Response) {
   }
 
   const candidature = await prisma.candidature.findFirst({
-    where: { id: req.params.id, userId: req.user!.id },
+    where: { id: String(req.params.id), userId: req.user!.id },
   });
   if (!candidature) {
     res.status(404).json(fail('Candidature introuvable'));
