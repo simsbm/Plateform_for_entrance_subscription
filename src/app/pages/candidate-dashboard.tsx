@@ -1,308 +1,318 @@
-import { Link } from 'react-router';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { GraduationCap, Download, FileText, CheckCircle, Clock, AlertCircle, MapPin, Calendar, User, LogOut } from 'lucide-react';
+import {
+  GraduationCap, Download, FileText, CheckCircle,
+  AlertCircle, MapPin, User, LogOut, Loader2, XCircle,
+  BadgeCheck, Hourglass,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { candidatureApi, pdfApi, clearAuth } from '../../lib/api';
+import type { StatutDossier } from '../../lib/api';
+import { LangSwitcher } from '../components/LangSwitcher';
+import axios from 'axios';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface CandidatureMe {
+  id: string;
+  numeroCandidat: string;
+  nom: string;
+  prenom: string;
+  filiere: string;
+  statut: StatutDossier;
+  montantPaye: number;
+  numeroRecuCampost: string | null;
+  motifRejet: string | null;
+  centreDepot: {
+    nom: string;
+    ville: string;
+    adresse: string;
+    telephone: string;
+  } | null;
+  documents: { id: string; type: string; nomFichier: string }[];
+  pdfsGeneres: { id: string; type: string; nomFichier: string }[];
+}
+
+// ─── Statut config (icons stay constant, labels come from i18n) ───────────────
+
+const STATUT_META: Record<StatutDossier, {
+  Icon: React.ElementType;
+  badgeClass: string;
+  bannerClass: string;
+}> = {
+  EN_ATTENTE: { Icon: Hourglass,   badgeClass: 'bg-muted text-muted-foreground',  bannerClass: 'from-muted to-muted/60 text-foreground' },
+  SOUMIS:     { Icon: Hourglass,   badgeClass: 'bg-blue-100 text-blue-700',        bannerClass: 'from-blue-600 to-blue-400 text-white' },
+  VALIDE:     { Icon: BadgeCheck,  badgeClass: 'bg-green-100 text-green-700',      bannerClass: 'from-green-600 to-green-400 text-white' },
+  REJETE:     { Icon: XCircle,     badgeClass: 'bg-red-100 text-red-700',          bannerClass: 'from-destructive to-red-400 text-white' },
+  ADMIS:      { Icon: CheckCircle, badgeClass: 'bg-purple-100 text-purple-700',    bannerClass: 'from-purple-600 to-purple-400 text-white' },
+};
+
+// ─── PDF helper ───────────────────────────────────────────────────────────────
+
+async function downloadBlob(promise: Promise<{ data: Blob }>, filename: string, onError: () => void) {
+  try {
+    const { data } = await promise;
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch {
+    onError();
+  }
+}
+
+// ─── Composant principal ──────────────────────────────────────────────────────
 
 export function CandidateDashboard() {
-  const candidate = {
-    name: 'ELI EYANGO',
-    candidateNumber: 'SUPP-2026-0001234',
-    email: 'eli.eyango@example.com',
-    program: 'ITT – Telecommunications Engineering',
-    applicationStatus: 'approved',
-    documentStatus: 'verified',
-    paymentStatus: 'completed',
-    examCenter: 'Yaoundé - Centre Region',
-    examDate: 'April 15, 2026',
-    examTime: '08:00 AM',
-  };
+  const { t } = useTranslation();
+  const navigate  = useNavigate();
+  const [candidature, setCandidature] = useState<CandidatureMe | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState<string | null>(null);
 
-  const applicationSteps = [
-    { label: 'Application Submitted', status: 'completed', date: 'March 1, 2026' },
-    { label: 'Documents Verified', status: 'completed', date: 'March 5, 2026' },
-    { label: 'Payment Confirmed', status: 'completed', date: 'March 6, 2026' },
-    { label: 'Application Approved', status: 'completed', date: 'March 10, 2026' },
-  ];
+  useEffect(() => {
+    candidatureApi.me()
+      .then(({ data }) => setCandidature(data.data as unknown as CandidatureMe))
+      .catch((err) => {
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+          setError('none');
+        } else {
+          setError(t('common.error'));
+          toast.error(t('common.error'));
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [t]);
 
-  const getStatusBadge = (status: string) => {
-    const config = {
-      approved: { variant: 'default' as const, className: 'bg-green-500', label: 'Approved' },
-      pending: { variant: 'secondary' as const, className: 'bg-yellow-500', label: 'Pending' },
-      rejected: { variant: 'destructive' as const, className: 'bg-red-500', label: 'Rejected' },
-      verified: { variant: 'default' as const, className: 'bg-green-500', label: 'Verified' },
-      completed: { variant: 'default' as const, className: 'bg-green-500', label: 'Completed' },
-    };
-    const statusConfig = config[status as keyof typeof config] || config.pending;
-    return <Badge className={statusConfig.className}>{statusConfig.label}</Badge>;
-  };
+  function handleLogout() {
+    clearAuth();
+    navigate('/login');
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error === 'none') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6">
+        <FileText className="w-16 h-16 text-muted-foreground" />
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">{t('dashboard.noApplication.title')}</h2>
+          <p className="text-muted-foreground mb-6">{t('dashboard.noApplication.subtitle')}</p>
+        </div>
+        <Button onClick={() => navigate('/apply')}>{t('dashboard.noApplication.cta')}</Button>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <AlertCircle className="w-12 h-12 text-destructive" />
+        <p className="text-destructive">{error}</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>{t('common.retry')}</Button>
+      </div>
+    );
+  }
+
+  if (!candidature) return null;
+
+  const statut = candidature.statut;
+  const meta   = STATUT_META[statut];
+  const StatusIcon = meta.Icon;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-18 h-18  rounded-lg flex items-center justify-center">
-                 <img src="src\img\cropped-logo-supptic.png" alt="logo of supptic" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-primary">SUPPTIC</h1>
-                <p className="text-xs text-muted-foreground">Candidate Dashboard</p>
-              </div>
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="src\img\cropped-logo-supptic.png" alt="logo" className="h-10" />
+            <div>
+              <h1 className="text-lg font-bold text-primary">{t('common.appName')}</h1>
+              <p className="text-xs text-muted-foreground">{t('dashboard.subtitle')}</p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-medium">{candidate.name}</p>
-                <p className="text-xs text-muted-foregroun
-                d">{candidate.candidateNumber}</p>
-              </div>
-              <Link to="/">
-                <Button variant="ghost" size="sm">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
-              </Link>
+          </div>
+          <div className="flex items-center gap-3">
+            <LangSwitcher />
+            <div className="text-right hidden md:block">
+              <p className="text-sm font-medium">{candidature.prenom} {candidature.nom}</p>
+              <p className="text-xs text-muted-foreground font-mono">{candidature.numeroCandidat}</p>
             </div>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+              <LogOut className="w-4 h-4" />
+              {t('common.logout')}
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-8 mb-8">
-          <h2 className="text-3xl font-bold mb-2">Welcome back, {candidate.name}!</h2>
-          <p className="text-blue-100">Your application has been successfully submitted and approved.</p>
+      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+
+        {/* Bandeau statut */}
+        <div className={`bg-gradient-to-r ${meta.bannerClass} rounded-xl p-6`}>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center shrink-0">
+              <StatusIcon className="w-7 h-7" />
+            </div>
+            <div>
+              <Badge className={`mb-1 ${meta.badgeClass}`}>
+                {t(`dashboard.statuts.${statut}.label`)}
+              </Badge>
+              <p className="text-sm opacity-90">
+                {t(`dashboard.statuts.${statut}.description`)}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Status Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        {/* Motif de rejet */}
+        {statut === 'REJETE' && candidature.motifRejet && (
+          <div className="flex gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
+            <div>
+              <p className="font-semibold text-sm mb-1">{t('dashboard.rejectReason')}</p>
+              <p className="text-sm">{candidature.motifRejet}</p>
+            </div>
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-2 gap-6">
+
+          {/* Infos candidature */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm">Application Status</CardTitle>
-              <CheckCircle className="w-5 h-5 text-green-500" />
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <User className="w-4 h-4" />
+                {t('dashboard.dossierInfo')}
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold">Approved</span>
-                {getStatusBadge(candidate.applicationStatus)}
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('dashboard.candidateNumber')}</span>
+                <span className="font-mono font-bold text-primary">{candidature.numeroCandidat}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('dashboard.fullName')}</span>
+                <span className="font-medium">{candidature.prenom} {candidature.nom}</span>
+              </div>
+              <div className="flex justify-between items-start">
+                <span className="text-muted-foreground">{t('dashboard.program')}</span>
+                <span className="font-medium text-right max-w-[60%]">
+                  {t(`filiere_labels.${candidature.filiere}`, { defaultValue: candidature.filiere })}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('dashboard.feesPaid')}</span>
+                <span className="font-medium text-green-600">
+                  {candidature.montantPaye.toLocaleString('fr-FR')} FCFA
+                </span>
+              </div>
+              {candidature.numeroRecuCampost && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t('dashboard.campostReceipt')}</span>
+                  <span className="font-mono">{candidature.numeroRecuCampost}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm">Document Verification</CardTitle>
-              <FileText className="w-5 h-5 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold">Verified</span>
-                {getStatusBadge(candidate.documentStatus)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm">Payment Status</CardTitle>
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold">Completed</span>
-                {getStatusBadge(candidate.paymentStatus)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Application Details */}
+          {/* Centre de dépôt */}
+          {candidature.centreDepot && (
             <Card>
               <CardHeader>
-                <CardTitle>Application Details</CardTitle>
-                <CardDescription>Your current application information</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Full Name</p>
-                      <p className="font-medium">{candidate.name}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Candidate Number</p>
-                      <p className="font-medium font-mono">{candidate.candidateNumber}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <GraduationCap className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Program</p>
-                      <p className="font-medium">{candidate.program}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Exam Center</p>
-                      <p className="font-medium">{candidate.examCenter}</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Exam Information */}
-            <Card className="border-2 border-accent">
-              <CardHeader className="bg-accent/10">
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-accent" />
-                  Exam Schedule
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {t('dashboard.depositCenter')}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Exam Date</p>
-                    <p className="text-2xl font-bold text-accent">{candidate.examDate}</p>
+              <CardContent className="space-y-2 text-sm">
+                <p className="font-semibold">{candidature.centreDepot.nom}</p>
+                <p className="text-muted-foreground">{candidature.centreDepot.adresse}</p>
+                <p className="text-muted-foreground">{candidature.centreDepot.ville}</p>
+                <p className="text-muted-foreground">{candidature.centreDepot.telephone}</p>
+                {statut === 'SOUMIS' && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-800">
+                      <strong>{t('dashboard.depositAction')}</strong>
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Time</p>
-                    <p className="text-xl font-bold">{candidate.examTime}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Location</p>
-                    <p className="font-medium">{candidate.examCenter}</p>
-                  </div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <div className="flex gap-3">
-                      <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-amber-900 mb-1">Important Reminder</p>
-                        <p className="text-sm text-amber-800">
-                          Please arrive 30 minutes before the exam starts. Bring your ID card, application slip, and required stationery.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
+          )}
 
-            {/* Application Timeline */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Application Timeline</CardTitle>
-                <CardDescription>Track your application progress</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {applicationSteps.map((step, index) => (
-                    <div key={index} className="flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                          <CheckCircle className="w-5 h-5 text-white" />
-                        </div>
-                        {index < applicationSteps.length - 1 && (
-                          <div className="w-0.5 h-12 bg-green-500 my-1" />
-                        )}
-                      </div>
-                      <div className="flex-1 pb-8">
-                        <p className="font-medium">{step.label}</p>
-                        <p className="text-sm text-muted-foreground">{step.date}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Documents */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                {t('dashboard.submittedDocs')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {candidature.documents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t('dashboard.noDocs')}</p>
+              ) : (
+                candidature.documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+                    <span className="text-muted-foreground">{doc.type.replace('_', ' ')}</span>
+                    <span className="text-xs text-muted-foreground truncate">— {doc.nomFichier}</span>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Right Column - Actions */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full justify-start" size="lg">
-                  <Download className="w-5 h-5 mr-2" />
-                  Download Application Slip
-                </Button>
-                <Button className="w-full justify-start" variant="outline" size="lg">
-                  <FileText className="w-5 h-5 mr-2" />
-                  View Application Form
-                </Button>
-                <Button className="w-full justify-start" variant="outline" size="lg">
-                  <Download className="w-5 h-5 mr-2" />
-                  Download Payment Receipt
-                </Button>
-              </CardContent>
-            </Card>
+          {/* Téléchargements */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <GraduationCap className="w-4 h-4" />
+                {t('dashboard.downloads')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                className="w-full justify-start gap-2"
+                onClick={() => downloadBlob(
+                  pdfApi.ficheCandidature(candidature.id),
+                  `fiche-${candidature.numeroCandidat}.pdf`,
+                  () => toast.error(t('dashboard.downloadError'))
+                )}
+              >
+                <Download className="w-4 h-4" />
+                {t('dashboard.downloadFiche')}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2"
+                onClick={() => downloadBlob(
+                  pdfApi.recepisse(candidature.id),
+                  `recepisse-${candidature.numeroCandidat}.pdf`,
+                  () => toast.error(t('dashboard.downloadError'))
+                )}
+              >
+                <Download className="w-4 h-4" />
+                {t('dashboard.downloadRecepisse')}
+              </Button>
+            </CardContent>
+          </Card>
 
-            <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20">
-              <CardHeader>
-                <CardTitle className="text-primary">Need Help?</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Contact our support team for assistance with your application.
-                </p>
-                <div className="space-y-2 text-sm">
-                  <p><strong>Email:</strong> support@supptic.cm</p>
-                  <p><strong>Phone:</strong> +237 222 XX XX XX</p>
-                  <p><strong>Hours:</strong> Mon-Fri, 8AM-5PM</p>
-                </div>
-                <Button variant="outline" className="w-full mt-4">
-                  Contact Support
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Important Dates</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Registration Deadline</p>
-                    <p className="font-medium">July 31, 2026</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-secondary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Exam Date</p>
-                    <p className="font-medium">July 15, 2026</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Results Publication</p>
-                    <p className="font-medium">July 30, 2026</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
     </div>

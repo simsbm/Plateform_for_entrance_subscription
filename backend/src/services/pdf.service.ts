@@ -1,7 +1,7 @@
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
-import { Candidature, CentreDepot } from '@prisma/client';
+import { CentreDepot } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
 const PDF_DIR = path.join(process.cwd(), 'pdfs');
@@ -143,34 +143,61 @@ export const pdfService = {
       drawSection(doc, '1. Informations personnelles');
       const cols = doc.page.width / 2 - 60;
       const y0   = doc.y;
-      drawField(doc, 'Nom',             candidature.nom,              58);
-      drawField(doc, 'Prénom(s)',        candidature.prenom,           58);
-      drawField(doc, 'Date de naissance', new Date(candidature.dateNaissance)
-                  .toLocaleDateString('fr-FR'), 58);
-      drawField(doc, 'Lieu de naissance', candidature.lieuNaissance,  58);
+      drawField(doc, 'Nom',               candidature.nom,              58);
+      drawField(doc, 'Prénom(s)',          candidature.prenom,           58);
+      drawField(doc, 'Date de naissance',  new Date(candidature.dateNaissance)
+                    .toLocaleDateString('fr-FR'), 58);
+      drawField(doc, 'Lieu de naissance',  candidature.lieuNaissance,   58);
+      const sm = (candidature as any).situationMatrimoniale;
+      if (sm) drawField(doc, 'Situation matrimoniale', sm === 'MARIE' ? 'Marié(e)' : 'Célibataire', 58);
       // Colonne droite
       const rightX = 50 + cols + 20;
       doc.y = y0;
-      drawField(doc, 'Région',          candidature.region,           rightX);
-      drawField(doc, 'Ville',           candidature.ville,            rightX);
-      drawField(doc, 'Nationalité',     candidature.nationalite,      rightX);
-      drawField(doc, 'Téléphone',       candidature.telephone,        rightX);
+      drawField(doc, 'Région',            candidature.region,           rightX);
+      drawField(doc, 'Ville',             candidature.ville,            rightX);
+      drawField(doc, 'Nationalité',       candidature.nationalite,      rightX);
+      drawField(doc, 'Téléphone',         candidature.telephone,        rightX);
       doc.moveDown(0.5);
-      drawField(doc, 'Email',           candidature.email,            58);
+      drawField(doc, 'Email',             candidature.email,            58);
+      const addr = (candidature as any).adresseAnneeScolaire;
+      if (addr) drawField(doc, 'Adresse (année scolaire)', addr, 58);
+
+      // Section 1b — Filiation
+      const nomPere = (candidature as any).nomPere;
+      const nomMere = (candidature as any).nomMere;
+      if (nomPere || nomMere) {
+        drawSection(doc, '1b. Filiation');
+        if (nomPere) {
+          const rPere = (candidature as any).regionPere ?? '';
+          const dPere = (candidature as any).departementPere ?? '';
+          drawField(doc, 'Père', `${nomPere}${rPere ? ` — Région : ${rPere}` : ''}${dPere ? `, Dép. : ${dPere}` : ''}`, 58);
+        }
+        if (nomMere) {
+          const rMere = (candidature as any).regionMere ?? '';
+          const dMere = (candidature as any).departementMere ?? '';
+          drawField(doc, 'Mère', `${nomMere}${rMere ? ` — Région : ${rMere}` : ''}${dMere ? `, Dép. : ${dMere}` : ''}`, 58);
+        }
+      }
 
       // Section 2 — Infos académiques
       drawSection(doc, '2. Informations académiques');
-      drawField(doc, 'Type de diplôme',  candidature.typeDiplome);
+      drawField(doc, 'Type de diplôme',   candidature.typeDiplome);
       if (candidature.serieBac)
-        drawField(doc, 'Série Bac',      candidature.serieBac);
+        drawField(doc, 'Série Bac',       candidature.serieBac);
       drawField(doc, 'Année d\'obtention', String(candidature.anneeObtention));
-      drawField(doc, 'Établissement',    candidature.etablissement);
+      drawField(doc, 'Établissement',     candidature.etablissement);
+      const extra = (candidature as any).activitesExtraScolaires;
+      if (extra) drawField(doc, 'Activités extra-scolaires', extra);
 
       // Section 3 — Concours
       drawSection(doc, '3. Filière et paiement');
-      drawField(doc, 'Filière',         FILIERE_LABELS[candidature.filiere] ?? candidature.filiere);
-      drawField(doc, 'Montant payé',    `${candidature.montantPaye.toLocaleString('fr-FR')} FCFA`);
-      drawField(doc, 'N° Reçu CAMPOST', candidature.numeroRecuCampost ?? '—');
+      drawField(doc, 'Filière',           FILIERE_LABELS[candidature.filiere] ?? candidature.filiere);
+      const lc = (candidature as any).langueComposition;
+      if (lc) {
+        drawField(doc, 'Langue de composition', lc === 'ANGLAIS' ? 'ANGLAIS / ENGLISH' : 'FRANÇAIS / FRENCH');
+      }
+      drawField(doc, 'Montant payé',      `${candidature.montantPaye.toLocaleString('fr-FR')} FCFA`);
+      drawField(doc, 'N° Reçu CAMPOST',   candidature.numeroRecuCampost ?? '—');
 
       // Section 4 — Centre de dépôt
       if (candidature.centreDepot) {

@@ -1,0 +1,409 @@
+{
+  "common": {
+    "appName": "SUPPTIC",
+    "appSubtitle": "Plateforme officielle d'inscription aux concours",
+    "schoolFull": "École Nationale Supérieure des Postes, des Télécommunications et des TIC",
+    "back": "Retour",
+    "backHome": "Retour à l'accueil",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "submit": "Soumettre",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue",
+    "unexpectedError": "Une erreur inattendue est survenue",
+    "retry": "Réessayer",
+    "logout": "Déconnexion",
+    "download": "Télécharger",
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "yes": "Oui",
+    "no": "Non"
+  },
+
+  "lang": {
+    "fr": "Français",
+    "en": "English",
+    "switch": "Changer de langue"
+  },
+
+  "nav": {
+    "checkResults": "Consulter les résultats",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "userGuide": "Guide d'utilisation"
+  },
+
+  "landing": {
+    "officialBadge": "Plateforme gouvernementale officielle",
+    "heroTitle": "Plateforme officielle d'inscription au concours d'entrée à SUP'PTIC",
+    "heroSubtitle": "Inscrivez-vous en ligne au concours national d'entrée. Sécurisé, rapide et accessible partout.",
+    "registerNow": "S'inscrire maintenant",
+    "learnMore": "En savoir plus",
+    "stats": {
+      "candidates": "Candidats inscrits",
+      "programs": "Filières de formation",
+      "successRate": "Taux de réussite",
+      "centers": "Centres régionaux"
+    },
+    "programs": {
+      "title": "Filières disponibles",
+      "subtitle": "Choisissez parmi nos formations conçues pour préparer les futurs acteurs des télécommunications et des postes.",
+      "applyNow": "Postuler",
+      "duration": "Durée",
+      "itt": {
+        "title": "ITT – Ingénieurs des Travaux des Télécommunications",
+        "description": "Formation d'ingénieurs en télécommunications. Développez une expertise dans les infrastructures réseau, la conception de systèmes et les technologies de pointe.",
+        "level": "Diplôme d'Ingénieur",
+        "duration": "3 ans"
+      },
+      "ipt": {
+        "title": "IPT – Inspecteurs des Postes et Télécommunications",
+        "description": "Formation pour inspecteurs des postes et télécommunications. Maîtrisez les cadres réglementaires, l'assurance qualité et la gestion des services.",
+        "level": "Diplôme Professionnel",
+        "duration": "3 ans"
+      },
+      "tt": {
+        "title": "TT – Techniciens des Télécommunications",
+        "description": "Formation technique pour techniciens télécom. Installation, maintenance et dépannage des systèmes et équipements de télécommunication.",
+        "level": "Brevet de Technicien",
+        "duration": "2 ans"
+      },
+      "cpt": {
+        "title": "CPT – Contrôleurs des Postes et Télécommunications",
+        "description": "Programme pour contrôleurs P&T. Gestion des opérations, logistique et excellence du service à la clientèle.",
+        "level": "Brevet Professionnel",
+        "duration": "2 ans"
+      }
+    },
+    "process": {
+      "title": "Processus de candidature",
+      "subtitle": "Suivez ces étapes pour finaliser votre inscription",
+      "steps": {
+        "account": { "title": "Créer un compte", "description": "Inscrivez-vous avec votre adresse e-mail" },
+        "form": { "title": "Remplir le formulaire", "description": "Complétez le formulaire de candidature en ligne" },
+        "docs": { "title": "Joindre les documents", "description": "Soumettez les pièces justificatives requises" },
+        "payment": { "title": "Payer les frais", "description": "Effectuez le versement à la CAMPOST" },
+        "download": { "title": "Télécharger la fiche", "description": "Récupérez votre récépissé de candidature" }
+      }
+    },
+    "cta": {
+      "title": "Prêt à commencer ?",
+      "subtitle": "Rejoignez des milliers de candidats qui préparent une carrière dans les télécommunications et les postes.",
+      "createAccount": "Créer mon compte",
+      "alreadyRegistered": "Déjà inscrit ? Connexion"
+    },
+    "footer": {
+      "links": "Liens rapides",
+      "programs": "Filières",
+      "contact": "Contact",
+      "copyright": "© 2026 SUPPTIC — École Nationale Supérieure des Postes, des Télécommunications et des TIC. Tous droits réservés."
+    }
+  },
+
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Accédez à votre espace candidat",
+      "email": "Adresse e-mail",
+      "emailPlaceholder": "candidat@example.cm",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Votre mot de passe",
+      "forgotPassword": "Mot de passe oublié ?",
+      "submit": "Se connecter",
+      "submitting": "Connexion en cours…",
+      "noAccount": "Pas encore de compte ?",
+      "createAccount": "Créer un compte",
+      "successToast": "Connexion réussie !",
+      "defaultError": "Identifiants incorrects"
+    },
+    "register": {
+      "title": "Créer un compte",
+      "subtitle": "Étape 1 / 2 — Identifiants de connexion",
+      "email": "Adresse e-mail",
+      "emailPlaceholder": "vous@example.cm",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "8 caractères minimum",
+      "confirmPassword": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Répétez le mot de passe",
+      "submit": "Créer mon compte",
+      "submitting": "Création en cours…",
+      "hint": "Après la création du compte, vous serez dirigé vers le formulaire de candidature.",
+      "alreadyAccount": "Déjà un compte ?",
+      "loginLink": "Se connecter",
+      "successToast": "Compte créé ! Complétez votre dossier de candidature.",
+      "errorPasswordLength": "Le mot de passe doit contenir au moins 8 caractères",
+      "errorPasswordMatch": "Les mots de passe ne correspondent pas",
+      "defaultError": "Erreur lors de la création du compte"
+    }
+  },
+
+  "apply": {
+    "header": "Formulaire de candidature SUPPTIC",
+    "headerSub": "Complétez toutes les étapes pour soumettre votre dossier",
+    "stepOf": "Étape {{current}} / {{total}}",
+    "completed": "% complété",
+    "steps": {
+      "identity": "Identité",
+      "academic": "Académique",
+      "program": "Filière",
+      "documents": "Documents",
+      "payment": "Paiement"
+    },
+    "identity": {
+      "title": "Informations personnelles",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "birthDate": "Date de naissance",
+      "birthPlace": "Lieu de naissance",
+      "region": "Région",
+      "regionPlaceholder": "Sélectionner une région",
+      "city": "Ville",
+      "nationality": "Nationalité",
+      "phone": "Téléphone",
+      "phonePlaceholder": "+237 6XX XXX XXX",
+      "email": "Adresse e-mail",
+      "maritalStatus": "Êtes-vous marié(e) ?",
+      "single": "Célibataire",
+      "married": "Marié(e)",
+      "academicAddress": "Adresse pendant l'année académique",
+      "fatherSection": "Renseignements sur le père",
+      "fatherName": "Nom du père",
+      "fatherRegion": "Région du père",
+      "fatherDept": "Département du père",
+      "motherSection": "Renseignements sur la mère",
+      "motherName": "Nom de la mère",
+      "motherRegion": "Région de la mère",
+      "motherDept": "Département de la mère"
+    },
+    "academic": {
+      "title": "Informations académiques",
+      "diplomaType": "Type de diplôme",
+      "diplomaPlaceholder": "Sélectionner un type de diplôme",
+      "bac": "Baccalauréat",
+      "gce": "GCE Advanced Level",
+      "equivalent": "Diplôme équivalent",
+      "bacSeries": "Série du Baccalauréat",
+      "seriesPlaceholder": "Sélectionner une série",
+      "year": "Année d'obtention",
+      "institution": "Établissement d'obtention",
+      "institutionPlaceholder": "Nom de l'établissement",
+      "extraActivities": "Activités extra-scolaires",
+      "extraActivitiesPlaceholder": "Sport, musique, associations…"
+    },
+    "programs": {
+      "title": "Choix de la filière",
+      "selectedLabel": "Filière sélectionnée",
+      "fees": "Frais à verser à la CAMPOST",
+      "years": "ans",
+      "langueComposition": "Langue de composition",
+      "langueCompositionHint": "Détermine la langue de vos épreuves écrites",
+      "langueFrancais": "Français",
+      "langueAnglais": "Anglais",
+      "engagementTitle": "Engagement financier (si admis)",
+      "engagementSubtitle": "Ces frais sont dus uniquement si vous êtes admis(e) — pas maintenant.",
+      "engagementInscription": "Frais d'inscription",
+      "engagementSport": "Activités sportives et culturelles",
+      "engagementAssurance": "Assurance",
+      "engagementScolarite": "Frais de scolarité",
+      "engagementCmr": "CMR",
+      "engagementEtr": "ETR",
+      "engagementTotal": "Total estimé",
+      "groups": {
+        "licence": "Cycle Licence",
+        "alternance": "Cycle Licence - Formation par alternance (Yaoundé uniquement)",
+        "master": "Cycle Master (Yaoundé uniquement)"
+      },
+      "filieres": {
+        "ITT": {
+          "nom": "Ingénieurs des Travaux des Télécommunications",
+          "desc": "Formation d'ingénieurs en télécommunications"
+        },
+        "IPT": {
+          "nom": "Inspecteurs des Postes et Télécommunications",
+          "desc": "Formation d'inspecteurs P&T"
+        },
+        "TT": {
+          "nom": "Techniciens des Télécommunications",
+          "desc": "Formation de techniciens télécom"
+        },
+        "CPT": {
+          "nom": "Contrôleurs des Postes et Télécommunications",
+          "desc": "Formation d'agents de contrôle P&T"
+        },
+        "ITT_ALT": {
+          "nom": "ITT — Ingénieurs des Travaux Télécommunications Alternance",
+          "desc": "Formation ITT en contrat d'alternance, Yaoundé uniquement"
+        },
+        "IPT_ALT": {
+          "nom": "IPT — Inspecteurs des Postes et Télécommunications Alternance",
+          "desc": "Formation IPT en contrat d'alternance, Yaoundé uniquement"
+        },
+        "IT": {
+          "nom": "Ingénieurs des Télécommunications",
+          "desc": "Formation Master en télécommunications, Yaoundé uniquement"
+        },
+        "APT": {
+          "nom": "Administrateurs des Postes et Télécommunications",
+          "desc": "Formation Master en administration P&T, Yaoundé uniquement"
+        }
+      }
+    },
+    "documents": {
+      "title": "Pièces justificatives & Centre de dépôt",
+      "birthCert": "Acte de naissance",
+      "diploma": "Diplôme du Baccalauréat",
+      "photo": "Photo d'identité (4×4)",
+      "cni": "Carte Nationale d'Identité",
+      "fileHint": "PDF, JPG ou PNG (max 5 Mo)",
+      "choose": "Choisir",
+      "change": "Changer",
+      "sizeWarning": "Tous les documents doivent être lisibles. Taille maximale : 5 Mo par fichier.",
+      "center": "Centre de dépôt physique",
+      "centerRequired": "Centre de dépôt requis",
+      "centerHint": "Choisissez le bureau CAMPOST où vous déposerez votre dossier physique.",
+      "centerPlaceholder": "Sélectionner un centre",
+      "centerLoading": "Chargement…",
+      "centerLoadError": "Impossible de charger les centres de dépôt"
+    },
+    "payment": {
+      "title": "Paiement des frais de dossier",
+      "selectedProgram": "Filière sélectionnée",
+      "fees": "Frais de dossier",
+      "howTitle": "Comment payer ?",
+      "howBody": "Effectuez votre versement de {{amount}} FCFA auprès de tout bureau CAMPOST au profit de l'Agent Comptable de SUP'PTIC (compte N° 150657330-19), puis saisissez le numéro figurant sur votre reçu ci-dessous.",
+      "receiptLabel": "Numéro de reçu CAMPOST",
+      "receiptRequired": "Veuillez saisir le numéro de reçu CAMPOST",
+      "receiptPlaceholder": "Ex : 0012345678",
+      "receiptHint": "Ce numéro figure sur le reçu remis par l'agent CAMPOST lors de votre versement."
+    },
+    "submit": "Soumettre ma candidature",
+    "submitting": "Soumission en cours…",
+    "successToast": "Candidature soumise avec succès !",
+    "errorToast": "Veuillez corriger les erreurs dans le formulaire",
+    "confirmation": {
+      "title": "Candidature soumise !",
+      "subtitle": "Votre dossier a été enregistré avec succès.",
+      "numberLabel": "Numéro de candidat",
+      "numberHint": "Conservez ce numéro — il vous sera demandé lors du dépôt physique.",
+      "downloadTitle": "Téléchargez vos documents :",
+      "downloadFiche": "Fiche de candidature",
+      "downloadRecepisse": "Récépissé de dépôt",
+      "dashboard": "Accéder à mon tableau de bord"
+    }
+  },
+
+  "dashboard": {
+    "subtitle": "Espace candidat",
+    "noApplication": {
+      "title": "Aucune candidature trouvée",
+      "subtitle": "Vous n'avez pas encore soumis de dossier de candidature.",
+      "cta": "Commencer ma candidature"
+    },
+    "statuts": {
+      "EN_ATTENTE": {
+        "label": "En attente de soumission",
+        "description": "Votre formulaire n'a pas encore été soumis."
+      },
+      "SOUMIS": {
+        "label": "Dossier soumis",
+        "description": "Votre dossier est en attente de vérification par un agent. Déposez votre dossier physique au centre sélectionné."
+      },
+      "VALIDE": {
+        "label": "Dossier validé",
+        "description": "Votre dossier a été vérifié et validé. Vous pouvez concourir."
+      },
+      "REJETE": {
+        "label": "Dossier rejeté",
+        "description": "Votre dossier a été rejeté. Consultez le motif ci-dessous."
+      },
+      "ADMIS": {
+        "label": "Admis à SUP'PTIC",
+        "description": "Félicitations ! Vous avez été admis à SUP'PTIC."
+      }
+    },
+    "rejectReason": "Motif de rejet",
+    "dossierInfo": "Informations du dossier",
+    "candidateNumber": "N° candidat",
+    "fullName": "Nom complet",
+    "program": "Filière",
+    "feesPaid": "Frais versés",
+    "campostReceipt": "Reçu CAMPOST",
+    "depositCenter": "Centre de dépôt",
+    "depositAction": "Action requise : Déposez votre dossier physique à cette adresse muni de votre numéro de candidat.",
+    "submittedDocs": "Documents soumis",
+    "noDocs": "Aucun document joint.",
+    "downloads": "Téléchargements",
+    "downloadFiche": "Fiche de candidature (PDF)",
+    "downloadRecepisse": "Récépissé de dépôt (PDF)",
+    "downloadError": "Erreur lors du téléchargement"
+  },
+
+  "agent": {
+    "title": "Interface Agent",
+    "subtitle": "Validation des dossiers de candidature",
+    "stats": {
+      "waiting": "En attente",
+      "toProcess": "À traiter",
+      "validated": "Validés",
+      "rejected": "Rejetés"
+    },
+    "tabs": {
+      "toProcess": "À traiter",
+      "validated": "Validés",
+      "rejected": "Rejetés"
+    },
+    "table": {
+      "candidateNum": "N° candidat",
+      "candidate": "Candidat",
+      "program": "Filière",
+      "campostReceipt": "N° reçu CAMPOST",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "results": "résultat",
+    "results_plural": "résultats",
+    "empty": "Aucun dossier dans cet onglet",
+    "validate": "Valider",
+    "reject": "Rejeter",
+    "validateSuccess": "Dossier validé avec succès",
+    "rejectSuccess": "Dossier rejeté",
+    "rejectMotifLabel": "Motif de rejet (obligatoire, 10 caractères min.)",
+    "rejectMotifPlaceholder": "Ex : Document manquant, acte de naissance illisible…",
+    "rejectConfirm": "Confirmer le rejet",
+    "rejectMotifError": "Le motif doit faire au moins 10 caractères",
+    "statuts": {
+      "EN_ATTENTE": "En attente",
+      "SOUMIS": "Soumis",
+      "VALIDE": "Validé",
+      "REJETE": "Rejeté",
+      "ADMIS": "Admis"
+    }
+  },
+
+  "regions": {
+    "adamaoua": "Adamaoua",
+    "centre": "Centre",
+    "est": "Est",
+    "extreme_nord": "Extrême-Nord",
+    "littoral": "Littoral",
+    "nord": "Nord",
+    "nord_ouest": "Nord-Ouest",
+    "ouest": "Ouest",
+    "sud": "Sud",
+    "sud_ouest": "Sud-Ouest"
+  },
+
+  "filiere_labels": {
+    "ITT":     "ITT — Ingénieurs Télécom",
+    "IPT":     "IPT — Inspecteurs P&T",
+    "TT":      "TT — Techniciens Télécom",
+    "CPT":     "CPT — Contrôleurs P&T",
+    "ITT_ALT": "ITT Alternance",
+    "IPT_ALT": "IPT Alternance",
+    "IT":      "IT — Ingénieurs Télécom (Master)",
+    "APT":     "APT — Admins P&T (Master)"
+  }
+}

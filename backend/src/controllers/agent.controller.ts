@@ -16,7 +16,7 @@ const ValiderSchema = z.object({
 // ─── Controllers ──────────────────────────────────────────────────────────────
 
 // GET /api/agent/dossiers
-// Liste les dossiers du centre de l'agent (statut DEPOSE par défaut)
+// Liste les dossiers du centre de l'agent (statut SOUMIS par défaut)
 export async function getDossiersDuCentre(req: Request, res: Response) {
   const agent = await prisma.user.findUnique({ where: { id: req.user!.id } });
   if (!agent?.centreId) {
@@ -24,7 +24,7 @@ export async function getDossiersDuCentre(req: Request, res: Response) {
     return;
   }
 
-  const { statut = 'DEPOSE', page = '1', limit = '20' } = req.query;
+  const { statut = 'SOUMIS', page = '1', limit = '20' } = req.query;
 
   const skip = (Number(page) - 1) * Number(limit);
 
@@ -36,7 +36,7 @@ export async function getDossiersDuCentre(req: Request, res: Response) {
       },
       skip,
       take: Number(limit),
-      orderBy: { dateDepot: 'asc' },
+      orderBy: { createdAt: 'asc' },
       select: {
         id: true,
         numeroCandidat: true,
@@ -65,7 +65,7 @@ export async function getDossierDetail(req: Request, res: Response) {
 
   const dossier = await prisma.candidature.findFirst({
     where: {
-      id: req.params.id,
+      id: String(req.params.id),
       centreDepotId: agent?.centreId ?? undefined,
     },
     include: {
@@ -83,35 +83,8 @@ export async function getDossierDetail(req: Request, res: Response) {
   res.json(ok(dossier));
 }
 
-// PATCH /api/agent/dossiers/:id/confirmer-depot
-// L'agent confirme la réception physique du dossier → SOUMIS → DEPOSE
-export async function confirmerDepot(req: Request, res: Response) {
-  const dossier = await prisma.candidature.findUnique({ where: { id: req.params.id } });
-
-  if (!dossier) {
-    res.status(404).json(fail('Dossier introuvable'));
-    return;
-  }
-  if (dossier.statut !== 'SOUMIS') {
-    res.status(400).json(fail(`Statut actuel "${dossier.statut}" — seul un dossier SOUMIS peut être marqué DEPOSE`));
-    return;
-  }
-
-  const updated = await prisma.candidature.update({
-    where: { id: req.params.id },
-    data: {
-      statut:   'DEPOSE',
-      agentId:  req.user!.id,
-      dateDepot: new Date(),
-    },
-    select: { id: true, numeroCandidat: true, statut: true, dateDepot: true },
-  });
-
-  res.json(ok(updated, 'Dépôt physique confirmé avec succès'));
-}
-
 // PATCH /api/agent/dossiers/:id/valider
-// L'agent valide ou rejette le dossier en 1 clic → DEPOSE → VALIDE | REJETE
+// L'agent valide ou rejette directement un dossier SOUMIS lors du dépôt physique
 export async function validerDossier(req: Request, res: Response) {
   const parsed = ValiderSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -119,25 +92,26 @@ export async function validerDossier(req: Request, res: Response) {
     return;
   }
 
-  const dossier = await prisma.candidature.findUnique({ where: { id: req.params.id } });
+  const dossier = await prisma.candidature.findUnique({ where: { id: String(req.params.id) } });
 
   if (!dossier) {
     res.status(404).json(fail('Dossier introuvable'));
     return;
   }
-  if (dossier.statut !== 'DEPOSE') {
-    res.status(400).json(fail(`Statut actuel "${dossier.statut}" — seul un dossier DEPOSE peut être validé ou rejeté`));
+  if (dossier.statut !== 'SOUMIS') {
+    res.status(400).json(fail(`Statut actuel "${dossier.statut}" — seul un dossier SOUMIS peut être validé ou rejeté`));
     return;
   }
 
   const { statut, motifRejet } = parsed.data;
 
   const updated = await prisma.candidature.update({
-    where: { id: req.params.id },
+    where: { id: String(req.params.id) },
     data: {
       statut,
       agentId:        req.user!.id,
       dateValidation: new Date(),
+      dateDepot:      new Date(),
       motifRejet:     statut === 'REJETE' ? motifRejet : null,
     },
     select: {
@@ -162,13 +136,12 @@ export async function getStatsCentre(req: Request, res: Response) {
     return;
   }
 
-  const [enAttente, soumis, deposes, valides, rejetes] = await Promise.all([
+  const [enAttente, soumis, valides, rejetes] = await Promise.all([
     prisma.candidature.count({ where: { centreDepotId: agent.centreId, statut: 'EN_ATTENTE' } }),
     prisma.candidature.count({ where: { centreDepotId: agent.centreId, statut: 'SOUMIS' } }),
-    prisma.candidature.count({ where: { centreDepotId: agent.centreId, statut: 'DEPOSE' } }),
     prisma.candidature.count({ where: { centreDepotId: agent.centreId, statut: 'VALIDE' } }),
     prisma.candidature.count({ where: { centreDepotId: agent.centreId, statut: 'REJETE' } }),
   ]);
 
-  res.json(ok({ enAttente, soumis, deposes, valides, rejetes }));
+  res.json(ok({ enAttente, soumis, valides, rejetes }));
 }

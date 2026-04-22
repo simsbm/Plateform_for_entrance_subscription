@@ -44,10 +44,19 @@ enum Filiere {
 enum StatutDossier {
   EN_ATTENTE  // Compte créé, formulaire en cours de saisie
   SOUMIS      // Formulaire soumis + PDFs générés automatiquement
-  DEPOSE      // Dossier physique déposé dans un centre habilité
-  VALIDE      // Agent a vérifié et validé le dossier
+  VALIDE      // Agent a vérifié et validé le dossier lors du dépôt physique
   REJETE      // Agent a rejeté le dossier (motif obligatoire)
   ADMIS       // Candidat admis au concours
+}
+
+enum LangueComposition {
+  FRANCAIS
+  ANGLAIS
+}
+
+enum SituationMatrimoniale {
+  CELIBATAIRE
+  MARIE
 }
 
 enum TypeDocument {
@@ -104,13 +113,27 @@ model Candidature {
   telephone      String
   email          String   // Dupliqué ici pour lisibilité dans les PDFs
 
+  // ── Informations personnelles complémentaires ──
+  situationMatrimoniale SituationMatrimoniale?
+  adresseAnneeScolaire  String?
+
+  // ── Filiation ─────────────────────────────────
+  nomPere          String?
+  regionPere       String?
+  departementPere  String?
+  nomMere          String?
+  regionMere       String?
+  departementMere  String?
+
   // ── Informations académiques ───────────────────
   typeDiplome    String   // "BAC" | "GCE_AL" | "EQUIVALENT"
   serieBac       String?  // Obligatoire si BAC
   anneeObtention Int
   etablissement  String
+  activitesExtraScolaires String?
 
   // ── Filière et paiement ────────────────────────
+  langueComposition LangueComposition?
   filiere        Filiere
   /// Calculé automatiquement selon la filière au moment de la soumission
   montantPaye    Int

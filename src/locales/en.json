@@ -1,0 +1,385 @@
+{
+  "common": {
+    "appName": "SUPPTIC",
+    "appSubtitle": "Official Entrance Examination Registration Platform",
+    "schoolFull": "National Advanced School of Posts, Telecommunications and ICT",
+    "back": "Back",
+    "backHome": "Back to home",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading…",
+    "error": "An error occurred",
+    "unexpectedError": "An unexpected error occurred",
+    "retry": "Try again",
+    "logout": "Logout",
+    "download": "Download",
+    "login": "Login",
+    "register": "Register",
+    "yes": "Yes",
+    "no": "No"
+  },
+
+  "lang": {
+    "fr": "Français",
+    "en": "English",
+    "switch": "Change language"
+  },
+
+  "nav": {
+    "checkResults": "Check Results",
+    "login": "Login",
+    "register": "Register Now",
+    "userGuide": "User Guide"
+  },
+
+  "landing": {
+    "officialBadge": "Official Government Platform",
+    "heroTitle": "Official SUPPTIC Entrance Examination Registration Platform",
+    "heroSubtitle": "Register online for the national entrance examination. Secure, fast, and accessible from anywhere.",
+    "registerNow": "Register Now",
+    "learnMore": "Learn More",
+    "stats": {
+      "candidates": "Candidates Registered",
+      "programs": "Training Programs",
+      "successRate": "Success Rate",
+      "centers": "Regional Centers"
+    },
+    "programs": {
+      "title": "Available Programs",
+      "subtitle": "Choose from our comprehensive training programs designed to prepare future leaders in telecommunications and postal services.",
+      "applyNow": "Apply Now",
+      "duration": "Duration",
+      "itt": {
+        "title": "ITT – Telecommunications Works Engineers",
+        "description": "Advanced training for telecommunications engineers. Develop expertise in network infrastructure, systems design, and cutting-edge technologies.",
+        "level": "Engineering Degree",
+        "duration": "3 years"
+      },
+      "ipt": {
+        "title": "IPT – Posts and Telecommunications Inspectors",
+        "description": "Professional program for postal and telecommunications inspectors. Master regulatory frameworks, quality assurance, and service management.",
+        "level": "Professional Degree",
+        "duration": "3 years"
+      },
+      "tt": {
+        "title": "TT – Telecommunications Technician",
+        "description": "Technical training for telecommunications technicians. Learn installation, maintenance, and troubleshooting of telecom systems and equipment.",
+        "level": "Technical Certificate",
+        "duration": "2 years"
+      },
+      "cpt": {
+        "title": "CPT – Posts and Telecommunications Controller",
+        "description": "Specialized program for postal and telecommunications controllers. Focus on operations management, logistics, and customer service excellence.",
+        "level": "Professional Certificate",
+        "duration": "2 years"
+      }
+    },
+    "process": {
+      "title": "Application Process",
+      "subtitle": "Follow these simple steps to complete your registration",
+      "steps": {
+        "account":  { "title": "Create Account",      "description": "Register with your email address" },
+        "form":     { "title": "Complete Application", "description": "Fill in the online application form" },
+        "docs":     { "title": "Upload Documents",     "description": "Submit required supporting documents" },
+        "payment":  { "title": "Pay Registration Fee", "description": "Make your payment at a CAMPOST office" },
+        "download": { "title": "Download Receipt",     "description": "Get your application confirmation receipt" }
+      }
+    },
+    "cta": {
+      "title": "Ready to Start Your Journey?",
+      "subtitle": "Join thousands of candidates preparing for a career in telecommunications and postal services.",
+      "createAccount": "Create Your Account",
+      "alreadyRegistered": "Already Registered? Login"
+    },
+    "footer": {
+      "links": "Quick Links",
+      "programs": "Programs",
+      "contact": "Contact",
+      "copyright": "© 2026 SUPPTIC — National Advanced School of Posts, Telecommunications and ICT. All rights reserved."
+    }
+  },
+
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Access your candidate portal",
+      "email": "Email address",
+      "emailPlaceholder": "candidate@example.cm",
+      "password": "Password",
+      "passwordPlaceholder": "Your password",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign In",
+      "submitting": "Signing in…",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create an account",
+      "successToast": "Successfully logged in!",
+      "defaultError": "Invalid email or password"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Step 1 / 2 — Login credentials",
+      "email": "Email address",
+      "emailPlaceholder": "you@example.cm",
+      "password": "Password",
+      "passwordPlaceholder": "Minimum 8 characters",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Repeat your password",
+      "submit": "Create My Account",
+      "submitting": "Creating account…",
+      "hint": "After account creation you will be redirected to the application form.",
+      "alreadyAccount": "Already have an account?",
+      "loginLink": "Sign in",
+      "successToast": "Account created! Complete your application form.",
+      "errorPasswordLength": "Password must be at least 8 characters",
+      "errorPasswordMatch": "Passwords do not match",
+      "defaultError": "Error creating account"
+    }
+  },
+
+  "apply": {
+    "header": "SUPPTIC Application Form",
+    "headerSub": "Complete all steps to submit your application",
+    "stepOf": "Step {{current}} / {{total}}",
+    "completed": "% completed",
+    "steps": {
+      "identity":  "Identity",
+      "academic":  "Academic",
+      "program":   "Program",
+      "documents": "Documents",
+      "payment":   "Payment"
+    },
+    "identity": {
+      "title": "Personal Information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "birthDate": "Date of Birth",
+      "birthPlace": "Place of Birth",
+      "region": "Region",
+      "regionPlaceholder": "Select a region",
+      "city": "City",
+      "nationality": "Nationality",
+      "phone": "Phone Number",
+      "phonePlaceholder": "+237 6XX XXX XXX",
+      "email": "Email Address",
+      "maritalStatus": "Are you married?",
+      "single": "Single",
+      "married": "Married",
+      "academicAddress": "Address during academic year",
+      "fatherSection": "Father's information",
+      "fatherName": "Father's name",
+      "fatherRegion": "Father's region",
+      "fatherDept": "Father's department",
+      "motherSection": "Mother's information",
+      "motherName": "Mother's name",
+      "motherRegion": "Mother's region",
+      "motherDept": "Mother's department"
+    },
+    "academic": {
+      "title": "Academic Information",
+      "diplomaType": "Diploma Type",
+      "diplomaPlaceholder": "Select a diploma type",
+      "bac": "Baccalauréat (French)",
+      "gce": "GCE Advanced Level",
+      "equivalent": "Equivalent Diploma",
+      "bacSeries": "Baccalauréat Series",
+      "seriesPlaceholder": "Select a series",
+      "year": "Year Obtained",
+      "institution": "Institution",
+      "institutionPlaceholder": "Name of institution",
+      "extraActivities": "Non-academic activities",
+      "extraActivitiesPlaceholder": "Sports, music, associations…"
+    },
+    "programs": {
+      "title": "Program Selection",
+      "selectedLabel": "Selected Program",
+      "fees": "Fees payable at CAMPOST",
+      "years": "years",
+      "langueComposition": "Composition language",
+      "langueCompositionHint": "Determines the language of your written exams",
+      "langueFrancais": "French",
+      "langueAnglais": "English",
+      "engagementTitle": "Financial commitment (if admitted)",
+      "engagementSubtitle": "These fees are only due if you are admitted — not now.",
+      "engagementInscription": "Registration fee",
+      "engagementSport": "Sports & cultural activities",
+      "engagementAssurance": "Insurance",
+      "engagementScolarite": "Tuition fees",
+      "engagementCmr": "CMR",
+      "engagementEtr": "ETR",
+      "engagementTotal": "Estimated total",
+      "groups": {
+        "licence":    "Licence Cycle",
+        "alternance": "Licence Cycle — Work-Study (Yaoundé only)",
+        "master":     "Master Cycle (Yaoundé only)"
+      },
+      "filieres": {
+        "ITT":     { "nom": "Telecommunications Works Engineers",             "desc": "Engineering training in telecommunications" },
+        "IPT":     { "nom": "Posts and Telecommunications Inspectors",        "desc": "Inspector training for Posts & Telecom" },
+        "TT":      { "nom": "Telecommunications Technicians",                 "desc": "Technical training in telecom" },
+        "CPT":     { "nom": "Posts and Telecommunications Controllers",       "desc": "Training for Posts & Telecom control agents" },
+        "ITT_ALT": { "nom": "ITT — Telecom Works Engineers (Work-Study)",    "desc": "ITT work-study training, Yaoundé only" },
+        "IPT_ALT": { "nom": "IPT — Posts & Telecom Inspectors (Work-Study)", "desc": "IPT work-study training, Yaoundé only" },
+        "IT":      { "nom": "Telecommunications Engineers",                   "desc": "Master's degree in telecommunications, Yaoundé only" },
+        "APT":     { "nom": "Posts and Telecommunications Administrators",    "desc": "Master's in Posts & Telecom administration, Yaoundé only" }
+      }
+    },
+    "documents": {
+      "title": "Supporting Documents & Deposit Centre",
+      "birthCert": "Birth Certificate",
+      "diploma": "Secondary School Diploma",
+      "photo": "Passport-size Photo (4×4)",
+      "cni": "National Identity Card",
+      "fileHint": "PDF, JPG or PNG (max 5 MB)",
+      "choose": "Choose",
+      "change": "Change",
+      "sizeWarning": "All documents must be legible. Maximum file size: 5 MB.",
+      "center": "Physical Deposit Centre",
+      "centerRequired": "Deposit centre is required",
+      "centerHint": "Select the CAMPOST office where you will submit your physical file.",
+      "centerPlaceholder": "Select a centre",
+      "centerLoading": "Loading…",
+      "centerLoadError": "Unable to load deposit centres"
+    },
+    "payment": {
+      "title": "Registration Fee Payment",
+      "selectedProgram": "Selected Program",
+      "fees": "Registration fee",
+      "howTitle": "How to pay?",
+      "howBody": "Make your payment of {{amount}} FCFA at any CAMPOST office to the Accounting Officer of SUP'PTIC (account N° 150657330-19), then enter the number on your receipt below.",
+      "receiptLabel": "CAMPOST Payment Receipt Number",
+      "receiptRequired": "Please enter your CAMPOST receipt number",
+      "receiptPlaceholder": "e.g. 0012345678",
+      "receiptHint": "This number appears on the receipt issued by the CAMPOST agent when you make your payment."
+    },
+    "submit": "Submit My Application",
+    "submitting": "Submitting…",
+    "successToast": "Application submitted successfully!",
+    "errorToast": "Please correct the errors in the form",
+    "confirmation": {
+      "title": "Application Submitted!",
+      "subtitle": "Your application has been successfully recorded.",
+      "numberLabel": "Candidate Number",
+      "numberHint": "Keep this number — you will need it when submitting your physical file.",
+      "downloadTitle": "Download your documents:",
+      "downloadFiche": "Application Form",
+      "downloadRecepisse": "Deposit Receipt",
+      "dashboard": "Go to my dashboard"
+    }
+  },
+
+  "dashboard": {
+    "subtitle": "Candidate Portal",
+    "noApplication": {
+      "title": "No application found",
+      "subtitle": "You have not yet submitted an application.",
+      "cta": "Start my application"
+    },
+    "statuts": {
+      "EN_ATTENTE": {
+        "label": "Pending submission",
+        "description": "Your application form has not been submitted yet."
+      },
+      "SOUMIS": {
+        "label": "Application submitted",
+        "description": "Your file is awaiting verification. Please submit your physical file at the selected centre."
+      },
+      "VALIDE": {
+        "label": "Application approved",
+        "description": "Your file has been verified and approved. You may sit the exam."
+      },
+      "REJETE": {
+        "label": "Application rejected",
+        "description": "Your application has been rejected. See the reason below."
+      },
+      "ADMIS": {
+        "label": "Admitted to SUP'PTIC",
+        "description": "Congratulations! You have been admitted to SUP'PTIC."
+      }
+    },
+    "rejectReason": "Rejection Reason",
+    "dossierInfo": "Application Details",
+    "candidateNumber": "Candidate No.",
+    "fullName": "Full Name",
+    "program": "Program",
+    "feesPaid": "Fees Paid",
+    "campostReceipt": "CAMPOST Receipt",
+    "depositCenter": "Deposit Centre",
+    "depositAction": "Action required: Submit your physical file at this address with your candidate number.",
+    "submittedDocs": "Submitted Documents",
+    "noDocs": "No documents attached.",
+    "downloads": "Downloads",
+    "downloadFiche": "Application Form (PDF)",
+    "downloadRecepisse": "Deposit Receipt (PDF)",
+    "downloadError": "Download error"
+  },
+
+  "agent": {
+    "title": "Agent Interface",
+    "subtitle": "Application File Validation",
+    "stats": {
+      "waiting":   "Pending",
+      "toProcess": "To Process",
+      "validated": "Validated",
+      "rejected":  "Rejected"
+    },
+    "tabs": {
+      "toProcess": "To Process",
+      "validated": "Validated",
+      "rejected":  "Rejected"
+    },
+    "table": {
+      "candidateNum":  "Candidate No.",
+      "candidate":     "Candidate",
+      "program":       "Program",
+      "campostReceipt":"CAMPOST Receipt No.",
+      "status":        "Status",
+      "actions":       "Actions"
+    },
+    "results":        "result",
+    "results_plural": "results",
+    "empty": "No files in this tab",
+    "validate": "Validate",
+    "reject":   "Reject",
+    "validateSuccess": "File successfully validated",
+    "rejectSuccess":   "File rejected",
+    "rejectMotifLabel":       "Rejection reason (required, min. 10 characters)",
+    "rejectMotifPlaceholder": "e.g. Missing document, illegible birth certificate…",
+    "rejectConfirm":    "Confirm Rejection",
+    "rejectMotifError": "The reason must be at least 10 characters",
+    "statuts": {
+      "EN_ATTENTE": "Pending",
+      "SOUMIS":     "Submitted",
+      "VALIDE":     "Validated",
+      "REJETE":     "Rejected",
+      "ADMIS":      "Admitted"
+    }
+  },
+
+  "regions": {
+    "adamaoua":    "Adamaoua",
+    "centre":      "Centre",
+    "est":         "East",
+    "extreme_nord":"Far North",
+    "littoral":    "Littoral",
+    "nord":        "North",
+    "nord_ouest":  "North West",
+    "ouest":       "West",
+    "sud":         "South",
+    "sud_ouest":   "South West"
+  },
+
+  "filiere_labels": {
+    "ITT":     "ITT — Telecom Works Engineers",
+    "IPT":     "IPT — Posts & Telecom Inspectors",
+    "TT":      "TT — Telecom Technicians",
+    "CPT":     "CPT — Posts & Telecom Controllers",
+    "ITT_ALT": "ITT Work-Study",
+    "IPT_ALT": "IPT Work-Study",
+    "IT":      "IT — Telecom Engineers (Master)",
+    "APT":     "APT — Posts & Telecom Admins (Master)"
+  }
+}

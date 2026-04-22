@@ -133,7 +133,7 @@ export const centresApi = {
 };
 
 // ─── Endpoints agent ─────────────────────────────────────────────────────────
-export type StatutDossier = 'EN_ATTENTE' | 'SOUMIS' | 'DEPOSE' | 'VALIDE' | 'REJETE' | 'ADMIS';
+export type StatutDossier = 'EN_ATTENTE' | 'SOUMIS' | 'VALIDE' | 'REJETE' | 'ADMIS';
 
 export interface DossierDocument {
   id: string;
@@ -157,7 +157,6 @@ export interface Dossier {
 export interface StatsCentre {
   enAttente: number;
   soumis: number;
-  deposes: number;
   valides: number;
   rejetes: number;
 }
@@ -171,9 +170,6 @@ export const agentApi = {
       '/agent/dossiers',
       { params: { statut, page } }
     ),
-
-  confirmerDepot: (id: string) =>
-    api.patch<ApiOk<Dossier>>(`/agent/dossiers/${id}/confirmer-depot`),
 
   valider: (id: string, statut: 'VALIDE' | 'REJETE', motifRejet?: string) =>
     api.patch<ApiOk<Dossier>>(`/agent/dossiers/${id}/valider`, { statut, motifRejet }),
