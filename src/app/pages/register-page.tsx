@@ -1,65 +1,87 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { GraduationCap, User, Mail, Phone, Lock, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, ArrowLeft, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { authApi, saveAuth } from '../../lib/api';
+import { LangSwitcher } from '../components/LangSwitcher';
+import axios from 'axios';
+
+interface FieldErrors {
+  email?: string[];
+  password?: string[];
+}
 
 export function RegisterPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
-  });
+  const [isLoading, setIsLoading]     = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [confirmPassword, setConfirm] = useState('');
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const clearFieldError = (field: keyof FieldErrors) =>
+    setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+    setGlobalError(null);
+    setFieldErrors({});
+
+    if (password.length < 8) {
+      setFieldErrors({ password: [t('auth.register.errorPasswordLength')] });
+      return;
+    }
+    if (password !== confirmPassword) {
+      setFieldErrors({ password: [t('auth.register.errorPasswordMatch')] });
       return;
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      toast.success('Account created successfully!');
+    try {
+      const { data } = await authApi.register(email, password);
+      const { token, user } = data.data;
+      saveAuth(token, user.role);
+      toast.success(t('auth.register.successToast'));
       navigate('/apply');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const body = err.response?.data;
+        if (body?.errors) {
+          setFieldErrors(body.errors as FieldErrors);
+        } else {
+          setGlobalError(body?.message ?? t('auth.register.defaultError'));
+        }
+      } else {
+        setGlobalError(t('common.unexpectedError'));
+      }
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
-      {/* Header */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="inline-flex items-center gap-3">
-            <div className="w-18 h-18  rounded-lg flex items-center justify-center">
-              <img src="src\img\cropped-logo-supptic.png" alt="logo of supptic" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-primary">SUPPTIC</h1>
-            </div>
+            <img src="src\img\cropped-logo-supptic.png" alt="logo SUPPTIC" className="h-10" />
+            <h1 className="text-lg font-bold text-primary">{t('common.appName')}</h1>
           </Link>
+          <LangSwitcher />
         </div>
       </div>
 
-      {/* Registration Form */}
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="max-w-md mx-auto px-6 py-12">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="w-4 h-4" />
-          Back to Home
+          {t('common.backHome')}
         </Link>
 
         <Card className="shadow-xl">
@@ -67,126 +89,78 @@ export function RegisterPage() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <User className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-3xl">Create Your Account</CardTitle>
-            <CardDescription>
-              Start your journey to SUPPTIC by creating a free account
-            </CardDescription>
+            <CardTitle className="text-3xl">{t('auth.register.title')}</CardTitle>
+            <CardDescription>{t('auth.register.subtitle')}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="firstName"
-                      placeholder="Enter your firstname"
-                      value={formData.firstName}
-                      onChange={(e) => handleChange('firstName', e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="lastName"
-                      placeholder="Enter your lastname"
-                      value={formData.lastName}
-                      onChange={(e) => handleChange('lastName', e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-5">
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t('auth.register.email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder=" username@gmail.com"
-                    value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    className="pl-10"
-                    required
+                    id="email" type="email"
+                    placeholder={t('auth.register.emailPlaceholder')}
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); clearFieldError('email'); }}
+                    className={`pl-10 ${fieldErrors.email ? 'border-destructive' : ''}`}
+                    required disabled={isLoading} autoComplete="email"
                   />
                 </div>
+                {fieldErrors.email && <p className="text-sm text-destructive">{fieldErrors.email[0]}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="password">{t('auth.register.password')}</Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
                   <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+237 6XX XXX XXX"
-                    value={formData.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
+                    id="password" type="password" minLength={8}
+                    placeholder={t('auth.register.passwordPlaceholder')}
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); }}
+                    className={`pl-10 ${fieldErrors.password ? 'border-destructive' : ''}`}
+                    required disabled={isLoading} autoComplete="new-password"
+                  />
+                </div>
+                {fieldErrors.password && <p className="text-sm text-destructive">{fieldErrors.password[0]}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">{t('auth.register.confirmPassword')}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword" type="password"
+                    placeholder={t('auth.register.confirmPasswordPlaceholder')}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirm(e.target.value)}
                     className="pl-10"
-                    required
+                    required disabled={isLoading} autoComplete="new-password"
                   />
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Create a password"
-                      value={formData.password}
-                      onChange={(e) => handleChange('password', e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+              {globalError && (
+                <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{globalError}</span>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Confirm password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  By creating an account, you agree to our Terms of Service and Privacy Policy.
-                </p>
-              </div>
+              )}
 
               <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                {isLoading ? 'Creating Account...' : 'Create Account'}
+                {isLoading ? t('auth.register.submitting') : t('auth.register.submit')}
               </Button>
+
+              <p className="text-xs text-center text-muted-foreground">{t('auth.register.hint')}</p>
 
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  Already have an account?{' '}
+                  {t('auth.register.alreadyAccount')}{' '}
                   <Link to="/login" className="text-primary font-medium hover:underline">
-                    Login
+                    {t('auth.register.loginLink')}
                   </Link>
                 </p>
               </div>
