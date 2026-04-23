@@ -33,9 +33,9 @@ const MONTANTS: Record<string, number> = {
 // ─── Engagement financier si admis (scolarité CMR / ETR) ─────────────────────
 const FIXED_FEES = { inscription: 10000, sport: 10000, assurance: 5000 };
 const SCOLARITE: Record<string, { cmr: number; etr: number }> = {
-  CPT:     { cmr: 200000, etr: 400000 },
-  TT:      { cmr: 200000, etr: 400000 },
-  IPT:     { cmr: 300000, etr: 600000 },
+  CPT:     { cmr: 300000, etr: 400000 },
+  TT:      { cmr: 300000, etr: 400000 },
+  IPT:     { cmr: 500000, etr: 800000 },
   ITT:     { cmr: 500000, etr: 800000 },
   ITT_ALT: { cmr: 500000, etr: 800000 },
   IPT_ALT: { cmr: 500000, etr: 800000 },
