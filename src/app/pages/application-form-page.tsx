@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/button';
@@ -36,11 +36,11 @@ const SCOLARITE: Record<string, { cmr: number; etr: number }> = {
   CPT:     { cmr: 200000, etr: 400000 },
   TT:      { cmr: 200000, etr: 400000 },
   IPT:     { cmr: 300000, etr: 600000 },
-  ITT:     { cmr: 300000, etr: 600000 },
+  ITT:     { cmr: 500000, etr: 800000 },
   ITT_ALT: { cmr: 500000, etr: 800000 },
   IPT_ALT: { cmr: 500000, etr: 800000 },
-  IT:      { cmr: 500000, etr: 800000 },
-  APT:     { cmr: 500000, etr: 800000 },
+  IT:      { cmr: 600000, etr: 1000000 },
+  APT:     { cmr: 600000, etr: 1000000 },
 };
 
 // ─── Données filières — structure accordéons ─────────────────────────────────
@@ -234,6 +234,13 @@ export function ApplicationFormPage() {
   }, [t]);
 
   const [openAccordion, setOpenAccordion] = useState<string>('classique');
+  const selectedCardRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (formData.filiere && selectedCardRef.current) {
+      selectedCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [formData.filiere]);
 
   const montant = MONTANTS[formData.filiere] ?? 15000;
 
@@ -705,7 +712,7 @@ export function ApplicationFormPage() {
 
             {/* ── Étape 3 : Choix de la filière ── */}
             {currentStep === 3 && (
-              <div className="space-y-5">
+              <div className="space-y-5 pb-20">
                 <h3 className="text-2xl font-bold">{t('apply.programs.title')}</h3>
 
                 {fe('filiere') && (
@@ -722,169 +729,119 @@ export function ApplicationFormPage() {
                   onValueChange={(v) => setOpenAccordion(v || openAccordion)}
                   className="space-y-3"
                 >
-                  {ACCORDEON_SECTIONS.map((acc) => (
-                    <AccordionItem
-                      key={acc.id}
-                      value={acc.id}
-                      className={[
-                        'rounded-xl border-2 overflow-hidden transition-colors',
-                        openAccordion === acc.id ? acc.borderColor : 'border-border',
-                      ].join(' ')}
-                    >
-                      {/* Trigger header */}
-                      <AccordionTrigger
-                        className={[
-                          'px-5 py-4 hover:no-underline transition-colors',
-                          acc.headerBg,
-                        ].join(' ')}
+                  {ACCORDEON_SECTIONS.map((acc) => {
+                    const isOpen = openAccordion === acc.id;
+                    const gradientStyle: React.CSSProperties = {
+                      background: acc.id === 'classique'
+                        ? 'linear-gradient(135deg, #0A2A66 0%, #1E3E82 100%)'
+                        : 'linear-gradient(135deg, #854F0B 0%, #A0621A 100%)',
+                    };
+                    return (
+                      <AccordionItem
+                        key={acc.id}
+                        value={acc.id}
+                        className="rounded-xl overflow-hidden border-0 shadow-md"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={[
-                            'w-9 h-9 rounded-lg flex items-center justify-center shrink-0',
-                            openAccordion === acc.id
-                              ? acc.id === 'classique' ? 'bg-blue-600' : 'bg-orange-500'
-                              : acc.id === 'classique' ? 'bg-blue-100' : 'bg-orange-100',
-                          ].join(' ')}>
-                            <acc.AccIcon className={[
-                              'w-5 h-5',
-                              openAccordion === acc.id ? 'text-white' : acc.headerText,
-                            ].join(' ')} />
+                        {/* Trigger header — dégradé coloré */}
+                        <AccordionTrigger
+                          className="px-5 py-4 hover:no-underline [&>svg]:text-white [&>svg]:opacity-90 [&>svg]:transition-transform [&>svg]:duration-300"
+                          style={gradientStyle}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-300 ${isOpen ? 'bg-white/25' : 'bg-white/15'}`}>
+                              <acc.AccIcon className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="text-left">
+                              <p className="font-bold text-sm md:text-base text-white leading-tight">{acc.titleFr}</p>
+                              <p className="text-xs text-white/70 italic">{acc.titleEn}</p>
+                            </div>
                           </div>
-                          <div className="text-left">
-                            <p className={`font-semibold text-sm ${acc.headerText}`}>
-                              {acc.titleFr}
-                            </p>
-                            <p className="text-xs text-muted-foreground italic">
-                              {acc.titleEn}
-                            </p>
-                          </div>
-                        </div>
-                      </AccordionTrigger>
+                        </AccordionTrigger>
 
-                      {/* Content */}
-                      <AccordionContent className="px-5 pb-5 pt-2 bg-white">
-                        <div className="space-y-6">
-                          {acc.subSections.map((sub) => (
-                            <div key={sub.titleFr} className="space-y-3">
-                              {/* Sub-section header */}
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h4 className="text-sm font-semibold text-foreground">
-                                  {sub.titleFr}
-                                  {sub.yaoundeOnly && (
-                                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                      — Yaoundé uniquement / Yaoundé only
-                                    </span>
-                                  )}
-                                </h4>
-                                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${sub.badgeClass}`}>
-                                  {sub.montant.toLocaleString('fr-FR')} FCFA
-                                </span>
-                              </div>
+                        {/* Content */}
+                        <AccordionContent className="px-4 md:px-5 pb-6 pt-4 bg-gray-50/50 border border-t-0 border-gray-200 rounded-b-xl">
+                          <div className="space-y-6">
+                            {acc.subSections.map((sub) => (
+                              <div key={sub.titleFr} className="space-y-3">
+                                {/* Sous-section header */}
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h4 className="text-sm font-semibold text-foreground">
+                                    {sub.titleFr}
+                                    {sub.yaoundeOnly && (
+                                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                        — Yaoundé uniquement / Yaoundé only
+                                      </span>
+                                    )}
+                                  </h4>
+                                </div>
 
-                              {/* Grille cartes */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {sub.items.map(({ code, nomFr, nomEn, duree, Icon }) => {
-                                  const isSelected = formData.filiere === code;
-                                  return (
-                                    <button
-                                      key={code}
-                                      type="button"
-                                      onClick={() => {
-                                        setFormData({ ...formData, filiere: code });
-                                        setOpenAccordion(acc.id);
-                                        clearFe('filiere');
-                                      }}
-                                      className={[
-                                        'relative rounded-xl border-2 p-4 text-left cursor-pointer transition-all duration-150 select-none bg-white w-full',
-                                        isSelected
-                                          ? 'border-primary shadow-md ring-2 ring-primary/20'
-                                          : 'border-border hover:border-primary/50 hover:shadow-sm',
-                                      ].join(' ')}
-                                    >
-                                      {/* Coche sélection */}
-                                      {isSelected && (
-                                        <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
-                                          <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-                                        </div>
-                                      )}
+                                {/* Grille cartes — 1 col mobile, 2 col desktop */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {sub.items.map(({ code, nomFr, nomEn, duree, Icon }) => {
+                                    const isSelected = formData.filiere === code;
+                                    const priceBadgeClass =
+                                      sub.montant === 15000 ? 'bg-green-100 text-green-700 border border-green-200' :
+                                      sub.montant === 20000 ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                                                              'bg-purple-100 text-purple-700 border border-purple-200';
+                                    return (
+                                      <button
+                                        key={code}
+                                        ref={isSelected ? selectedCardRef : undefined}
+                                        type="button"
+                                        onClick={() => {
+                                          setFormData({ ...formData, filiere: code });
+                                          clearFe('filiere');
+                                        }}
+                                        className={[
+                                          'relative rounded-xl border-2 p-4 text-left cursor-pointer select-none bg-white w-full',
+                                          'transition-all duration-200',
+                                          isSelected
+                                            ? 'border-[#0A2A66] bg-blue-50/60 shadow-lg ring-2 ring-[#0A2A66]/10'
+                                            : 'border-border hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5',
+                                        ].join(' ')}
+                                      >
+                                        {/* Badge prix OU coche selon sélection */}
+                                        {isSelected ? (
+                                          <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
+                                            <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                                          </div>
+                                        ) : (
+                                          <span className={`absolute top-3 right-3 text-xs font-bold px-2 py-0.5 rounded-full ${priceBadgeClass}`}>
+                                            {sub.montant.toLocaleString('fr-FR')} F
+                                          </span>
+                                        )}
 
-                                      <div className="flex gap-3 pr-6">
-                                        {/* Icône */}
-                                        <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${sub.iconBg}`}>
-                                          <Icon className={`w-5 h-5 ${sub.iconColor}`} />
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                          {/* Code + durée */}
-                                          <div className="flex items-center gap-2 mb-1.5">
-                                            <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                                              {code}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">
-                                              {duree} {t('apply.programs.years')}
-                                            </span>
+                                        <div className="flex gap-3 pr-10">
+                                          {/* Icône cercle coloré */}
+                                          <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${sub.iconBg}`}>
+                                            <Icon className={`w-5 h-5 ${sub.iconColor}`} />
                                           </div>
 
-                                          {/* Nom FR */}
-                                          <p className="text-sm font-semibold leading-snug text-foreground">
-                                            {nomFr}
-                                          </p>
-
-                                          {/* Nom EN */}
-                                          <p className="text-xs text-muted-foreground italic mt-0.5 leading-snug">
-                                            {nomEn}
-                                          </p>
-
-                                          {/* Montant */}
-                                          <p className="text-sm font-bold text-green-600 mt-2">
-                                            {sub.montant.toLocaleString('fr-FR')} FCFA
-                                          </p>
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1.5">
+                                              <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                                                {code}
+                                              </span>
+                                              <span className="text-xs text-muted-foreground">
+                                                {duree} {t('apply.programs.years')}
+                                              </span>
+                                            </div>
+                                            <p className="text-sm font-semibold leading-snug text-foreground">{nomFr}</p>
+                                            <p className="text-xs text-muted-foreground italic mt-0.5 leading-snug">{nomEn}</p>
+                                          </div>
                                         </div>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
                 </Accordion>
-
-                {/* ── Récapitulatif filière sélectionnée ── */}
-                {formData.filiere && (
-                  <div className="flex items-center justify-between gap-4 p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{t('apply.programs.selectedLabel')}</p>
-                        <p className="font-bold text-primary">
-                          {/* Nom complet depuis la structure de données */}
-                          {ACCORDEON_SECTIONS
-                            .flatMap((a) => a.subSections.flatMap((s) => s.items))
-                            .find((it) => it.code === formData.filiere)
-                            ?.nomFr ?? formData.filiere}
-                        </p>
-                        <p className="text-xs text-muted-foreground italic">
-                          {ACCORDEON_SECTIONS
-                            .flatMap((a) => a.subSections.flatMap((s) => s.items))
-                            .find((it) => it.code === formData.filiere)
-                            ?.nomEn ?? ''}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs text-muted-foreground">{t('apply.programs.fees')}</p>
-                      <p className="text-xl font-bold text-green-600">
-                        {(MONTANTS[formData.filiere] ?? 0).toLocaleString('fr-FR')} FCFA
-                      </p>
-                    </div>
-                  </div>
-                )}
 
                 {/* ── Langue de composition ── */}
                 <div className="space-y-2 pt-1">
@@ -900,7 +857,7 @@ export function ApplicationFormPage() {
                         type="button"
                         onClick={() => { setFormData({ ...formData, langueComposition: lang }); clearFe('langueComposition'); }}
                         className={[
-                          'flex-1 py-3 rounded-xl border-2 text-sm font-semibold transition-all',
+                          'flex-1 py-3 rounded-xl border-2 text-sm font-semibold transition-all duration-200',
                           formData.langueComposition === lang
                             ? 'border-primary bg-primary text-white shadow-md'
                             : 'border-border text-muted-foreground hover:border-primary/40 bg-white',
@@ -913,53 +870,54 @@ export function ApplicationFormPage() {
                   {fe('langueComposition') && <p className="text-sm text-destructive">{fe('langueComposition')}</p>}
                 </div>
 
-                {/* ── Engagement financier si admis ── */}
+                {/* ── Tableau engagement financier si admis ── */}
                 {formData.filiere && SCOLARITE[formData.filiere] && (() => {
                   const sc = SCOLARITE[formData.filiere];
                   const fixedTotal = FIXED_FEES.inscription + FIXED_FEES.sport + FIXED_FEES.assurance;
                   const totalCmr = fixedTotal + sc.cmr;
                   const totalEtr = fixedTotal + sc.etr;
                   return (
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 space-y-3">
-                      <div>
-                        <p className="text-sm font-bold text-amber-900">{t('apply.programs.engagementTitle')}</p>
-                        <p className="text-xs text-amber-700 mt-0.5">{t('apply.programs.engagementSubtitle')}</p>
-                      </div>
-                      <table className="w-full text-sm">
-                        <tbody className="divide-y divide-amber-100">
-                          {[
-                            { label: t('apply.programs.engagementInscription'), val: FIXED_FEES.inscription },
-                            { label: t('apply.programs.engagementSport'),       val: FIXED_FEES.sport },
-                            { label: t('apply.programs.engagementAssurance'),   val: FIXED_FEES.assurance },
-                          ].map(({ label, val }) => (
-                            <tr key={label} className="text-amber-800">
-                              <td className="py-1.5">{label}</td>
-                              <td className="text-right font-medium">{val.toLocaleString('fr-FR')} FCFA</td>
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 md:p-5 space-y-3">
+                      <p className="text-sm font-bold text-amber-900">
+                        Si admis, frais annuels à régler{' '}
+                        <span className="font-normal italic">/ If admitted, annual fees to pay</span>
+                      </p>
+                      {/* Scroll horizontal sur mobile */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm min-w-[380px]">
+                          <thead>
+                            <tr className="text-xs font-bold text-amber-900 border-b-2 border-amber-200">
+                              <th className="text-left pb-2 pr-4">Frais</th>
+                              <th className="text-right pb-2 px-2 whitespace-nowrap">Camerounais</th>
+                              <th className="text-right pb-2 pl-2 whitespace-nowrap">Étranger / Foreigner</th>
                             </tr>
-                          ))}
-                          <tr className="text-amber-800">
-                            <td className="py-1.5 flex items-center gap-1">
-                              <MapPin className="w-3 h-3 shrink-0" />
-                              {t('apply.programs.engagementScolarite')}
-                            </td>
-                            <td className="text-right font-medium">
-                              <span className="text-xs text-amber-600">{t('apply.programs.engagementCmr')} </span>
-                              {sc.cmr.toLocaleString('fr-FR')}{' '}
-                              <span className="text-amber-400">/</span>{' '}
-                              <span className="text-xs text-amber-600">{t('apply.programs.engagementEtr')} </span>
-                              {sc.etr.toLocaleString('fr-FR')} FCFA
-                            </td>
-                          </tr>
-                        </tbody>
-                        <tfoot>
-                          <tr className="font-bold text-amber-900 border-t-2 border-amber-200">
-                            <td className="pt-2">{t('apply.programs.engagementTotal')}</td>
-                            <td className="pt-2 text-right">
-                              {totalCmr.toLocaleString('fr-FR')} / {totalEtr.toLocaleString('fr-FR')} FCFA
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-amber-100">
+                            {[
+                              { label: 'Inscription / Registration fees', cmr: FIXED_FEES.inscription, etr: FIXED_FEES.inscription },
+                              { label: 'Activités sport / culture',       cmr: FIXED_FEES.sport,       etr: FIXED_FEES.sport },
+                              { label: 'Assurance / Insurance',           cmr: FIXED_FEES.assurance,   etr: FIXED_FEES.assurance },
+                              { label: 'Scolarité / Tuition',             cmr: sc.cmr,                 etr: sc.etr },
+                            ].map(({ label, cmr, etr }) => (
+                              <tr key={label} className="text-amber-800">
+                                <td className="py-2 pr-4">{label}</td>
+                                <td className="py-2 px-2 text-right font-medium tabular-nums">{cmr.toLocaleString('fr-FR')}</td>
+                                <td className="py-2 pl-2 text-right font-medium tabular-nums">{etr.toLocaleString('fr-FR')}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr className="font-bold text-amber-900 border-t-2 border-amber-300">
+                              <td className="pt-2.5 pr-4">TOTAL (FCFA)</td>
+                              <td className="pt-2.5 px-2 text-right tabular-nums">{totalCmr.toLocaleString('fr-FR')}</td>
+                              <td className="pt-2.5 pl-2 text-right tabular-nums">{totalEtr.toLocaleString('fr-FR')}</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                      <p className="text-xs text-amber-700 italic border-t border-amber-200 pt-2">
+                        Ces frais sont dus uniquement en cas d'admission / These fees are due only upon admission.
+                      </p>
                     </div>
                   );
                 })()}
@@ -1127,6 +1085,45 @@ export function ApplicationFormPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ── Barre fixe étape 3 — récap filière sélectionnée ── */}
+      {currentStep === 3 && formData.filiere && (() => {
+        const selected = ACCORDEON_SECTIONS
+          .flatMap((a) => a.subSections.flatMap((s) => s.items))
+          .find((it) => it.code === formData.filiere);
+        return (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-2xl">
+            <div className="max-w-4xl mx-auto px-4 md:px-6 py-3 flex items-center gap-4">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground leading-none mb-0.5">Filière sélectionnée</p>
+                <p className="text-sm font-bold text-foreground truncate">
+                  {selected?.nomFr ?? formData.filiere}
+                  {selected?.nomEn && (
+                    <span className="font-normal text-muted-foreground"> / {selected.nomEn}</span>
+                  )}
+                </p>
+              </div>
+              <div className="text-right shrink-0 hidden sm:block">
+                <p className="text-xs text-muted-foreground">Frais CAMPOST</p>
+                <p className="text-base font-bold text-green-600">
+                  {(MONTANTS[formData.filiere] ?? 0).toLocaleString('fr-FR')} FCFA
+                </p>
+              </div>
+              <Button
+                onClick={handleNext}
+                className="shrink-0 gap-1.5"
+                style={{ background: 'linear-gradient(135deg, #0A2A66 0%, #1E3E82 100%)' }}
+              >
+                Continuer
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
