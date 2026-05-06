@@ -224,7 +224,9 @@
         "ITT_ALT": { "nom": "ITT — Telecom Works Engineers (Work-Study)",    "desc": "ITT work-study training, Yaoundé only" },
         "IPT_ALT": { "nom": "IPT — Posts & Telecom Inspectors (Work-Study)", "desc": "IPT work-study training, Yaoundé only" },
         "IT":      { "nom": "Telecommunications Engineers",                   "desc": "Master's degree in telecommunications, Yaoundé only" },
-        "APT":     { "nom": "Posts and Telecommunications Administrators",    "desc": "Master's in Posts & Telecom administration, Yaoundé only" }
+        "APT":     { "nom": "Posts and Telecommunications Administrators",    "desc": "Master's in Posts & Telecom administration, Yaoundé only" },
+        "ATT":     { "nom": "Assistant Telecommunications Technicians",       "desc": "Technical training for telecom agents — BEPC / GCE O Level" },
+        "AEPT":    { "nom": "Postal Clerks",                                  "desc": "Postal and telecom operations training — BEPC / GCE O Level" }
       }
     },
     "documents": {
@@ -380,6 +382,8 @@
     "ITT_ALT": "ITT Work-Study",
     "IPT_ALT": "IPT Work-Study",
     "IT":      "IT — Telecom Engineers (Master)",
-    "APT":     "APT — Posts & Telecom Admins (Master)"
+    "APT":     "APT — Posts & Telecom Admins (Master)",
+    "ATT":     "ATT — Assistant Telecommunications Technicians",
+    "AEPT":    "AEPT — Postal Clerks"
   }
 }

@@ -28,7 +28,12 @@ const MONTANTS: Record<string, number> = {
   ITT: 15000, IPT: 15000, TT: 15000, CPT: 15000,
   ITT_ALT: 20000, IPT_ALT: 20000,
   IT: 25000, APT: 25000,
+  ATT: 15000, AEPT: 15000,
 };
+
+// ─── Filières accessibles uniquement au centre de Buea ───────────────────────
+// Décision N° 0000074 du 13 mai 2025 — Centre de Formation Régional annexe de Buea
+const FILIERES_BUEA_ONLY = ['ATT', 'AEPT'];
 
 // ─── Engagement financier si admis (scolarité CMR / ETR) ─────────────────────
 const FIXED_FEES = { inscription: 10000, sport: 10000, assurance: 5000 };
@@ -41,6 +46,8 @@ const SCOLARITE: Record<string, { cmr: number; etr: number }> = {
   IPT_ALT: { cmr: 500000, etr: 800000 },
   IT:      { cmr: 600000, etr: 1000000 },
   APT:     { cmr: 600000, etr: 1000000 },
+  ATT:     { cmr: 200000, etr: 400000 },
+  AEPT:    { cmr: 200000, etr: 400000 },
 };
 
 // ─── Données filières — structure accordéons ─────────────────────────────────
@@ -135,6 +142,29 @@ const ACCORDEON_SECTIONS: AccordeonSection[] = [
       },
     ],
   },
+  {
+    id: 'buea',
+    titleFr: 'Formation de base — Buea uniquement',
+    titleEn: 'Basic training — Buea only',
+    AccIcon: Wrench,
+    headerBg: 'bg-green-50 hover:bg-green-100/60',
+    headerText: 'text-green-900',
+    borderColor: 'border-green-200',
+    subSections: [
+      {
+        titleFr: 'Cycle Technicien (15 000 FCFA) — Buea uniquement',
+        titleEn: 'Technician Cycle (15,000 FCFA) — Buea only',
+        montant: 15000,
+        badgeClass: 'bg-green-100 text-green-700 border border-green-200',
+        iconBg: 'bg-green-100',
+        iconColor: 'text-green-700',
+        items: [
+          { code: 'ATT',  nomFr: 'Agents Techniques des Télécommunications',      nomEn: 'Assistant Telecommunications Technicians', duree: '2', Icon: Wrench },
+          { code: 'AEPT', nomFr: "Agents d'Exploitation des Postes et Télécoms",  nomEn: 'Postal Clerks',                            duree: '2', Icon: ClipboardList },
+        ],
+      },
+    ],
+  },
 ];
 
 // ─── Erreurs par champ ────────────────────────────────────────────────────────
@@ -207,7 +237,7 @@ export function ApplicationFormPage() {
     nomPere: '', regionPere: '', departementPere: '',
     nomMere: '', regionMere: '', departementMere: '',
     // Étape 2 — Académique
-    typeDiplome: '' as '' | 'BAC' | 'GCE_AL' | 'EQUIVALENT',
+    typeDiplome: '' as '' | 'BAC' | 'GCE_AL' | 'EQUIVALENT' | 'BEPC' | 'GCE_OL' | 'GCE_OL_TECH' | 'CAP' | 'CITY_GUILDS' | 'ITC',
     serieBac: '', anneeObtention: '', etablissement: '',
     activitesExtraScolaires: '',
     // Étape 3 — Filière
@@ -647,15 +677,34 @@ export function ApplicationFormPage() {
 
                   <div className="space-y-2">
                     <Label>{t('apply.academic.diplomaType')}</Label>
+                    {FILIERES_BUEA_ONLY.includes(formData.filiere) && (
+                      <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+                        ATT / AEPT — Niveau BEPC / GCE O Level requis (pas le BAC)
+                      </p>
+                    )}
                     <Select value={formData.typeDiplome}
                       onValueChange={(v) => { setFormData({ ...formData, typeDiplome: v as typeof formData.typeDiplome }); clearFe('typeDiplome'); }}>
                       <SelectTrigger className={errClass('typeDiplome')}>
                         <SelectValue placeholder={t('apply.academic.diplomaPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="BAC">{t('apply.academic.bac')}</SelectItem>
-                        <SelectItem value="GCE_AL">{t('apply.academic.gce')}</SelectItem>
-                        <SelectItem value="EQUIVALENT">{t('apply.academic.equivalent')}</SelectItem>
+                        {FILIERES_BUEA_ONLY.includes(formData.filiere) ? (
+                          <>
+                            <SelectItem value="BEPC">B.E.P.C.</SelectItem>
+                            <SelectItem value="GCE_OL">GCE O Level (4 sciences subjects excl. Religion)</SelectItem>
+                            <SelectItem value="GCE_OL_TECH">GCE O Level Technical</SelectItem>
+                            <SelectItem value="CAP">C.A.P.</SelectItem>
+                            <SelectItem value="CITY_GUILDS">City and Guilds Part I</SelectItem>
+                            <SelectItem value="ITC">Intermediate Technical Certificate</SelectItem>
+                            <SelectItem value="EQUIVALENT">Any recognised equivalent certificate</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="BAC">{t('apply.academic.bac')}</SelectItem>
+                            <SelectItem value="GCE_AL">{t('apply.academic.gce')}</SelectItem>
+                            <SelectItem value="EQUIVALENT">{t('apply.academic.equivalent')}</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     {fe('typeDiplome') && <p className="text-sm text-destructive">{fe('typeDiplome')}</p>}
@@ -734,7 +783,9 @@ export function ApplicationFormPage() {
                     const gradientStyle: React.CSSProperties = {
                       background: acc.id === 'classique'
                         ? 'linear-gradient(135deg, #0A2A66 0%, #1E3E82 100%)'
-                        : 'linear-gradient(135deg, #854F0B 0%, #A0621A 100%)',
+                        : acc.id === 'alternance'
+                        ? 'linear-gradient(135deg, #854F0B 0%, #A0621A 100%)'
+                        : 'linear-gradient(135deg, #14532D 0%, #166534 100%)',
                     };
                     return (
                       <AccordionItem
@@ -789,7 +840,13 @@ export function ApplicationFormPage() {
                                         ref={isSelected ? selectedCardRef : undefined}
                                         type="button"
                                         onClick={() => {
-                                          setFormData({ ...formData, filiere: code });
+                                          const prevIsBuea = FILIERES_BUEA_ONLY.includes(formData.filiere);
+                                          const newIsBuea  = FILIERES_BUEA_ONLY.includes(code);
+                                          setFormData({
+                                            ...formData,
+                                            filiere: code,
+                                            ...(prevIsBuea !== newIsBuea && { typeDiplome: '' }),
+                                          });
                                           clearFe('filiere');
                                         }}
                                         className={[

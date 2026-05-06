@@ -248,6 +248,14 @@
         "APT": {
           "nom": "Administrateurs des Postes et Télécommunications",
           "desc": "Formation Master en administration P&T, Yaoundé uniquement"
+        },
+        "ATT": {
+          "nom": "Agents Techniques des Télécommunications",
+          "desc": "Formation d'agents techniques télécoms — Niveau BEPC"
+        },
+        "AEPT": {
+          "nom": "Agents d'Exploitation des Postes et Télécoms",
+          "desc": "Formation d'agents d'exploitation P&T — Niveau BEPC"
         }
       }
     },
@@ -404,6 +412,8 @@
     "ITT_ALT": "ITT Alternance",
     "IPT_ALT": "IPT Alternance",
     "IT":      "IT — Ingénieurs Télécom (Master)",
-    "APT":     "APT — Admins P&T (Master)"
+    "APT":     "APT — Admins P&T (Master)",
+    "ATT":     "ATT — Agents Techniques des Télécommunications",
+    "AEPT":    "AEPT — Agents d'Exploitation des Postes et Télécoms"
   }
 }
