@@ -24,8 +24,8 @@ enum Role {
 /// Licence session principale : ITT, IPT, TT, CPT          → 15 000 FCFA
 /// Licence alternance (Yaoundé uniquement) : ITT_ALT, IPT_ALT → 20 000 FCFA
 /// Master (Yaoundé uniquement) : IT, APT                   → 25 000 FCFA
-/// Cycle technicien (Buea uniquement) : ATT, AEPT           → 15 000 FCFA
-///   (Décision N° 0000074 du 13 mai 2025 — Centre de Formation Régional annexe de Buea)
+/// Cycle technicien BEPC (10 centres régionaux) : ATT, AEPT → 15 000 FCFA
+///   (Décision N° 0000074 du 13 mai 2025)
 enum Filiere {
   // Licence — session principale
   ITT      // Ingénieurs des Travaux des Télécommunications
@@ -41,7 +41,7 @@ enum Filiere {
   IT       // Ingénieurs des Télécommunications
   APT      // Administrateurs des Postes et Télécommunications
 
-  // Cycle technicien BEPC — Buea uniquement (Décision N° 0000074 — 13 mai 2025)
+  // Cycle technicien BEPC — 10 centres régionaux (Décision N° 0000074 — 13 mai 2025)
   ATT      // Agents Techniques des Télécommunications
   AEPT     // Agents d'Exploitation des Postes et Télécommunications
 }
