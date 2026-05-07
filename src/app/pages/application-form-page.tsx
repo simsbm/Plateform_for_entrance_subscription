@@ -54,6 +54,9 @@ type AccordeonSection = {
   titleFr: string;
   titleEn: string;
   AccIcon: React.ElementType;
+  accentColor: string;
+  accentBg: string;
+  accentText: string;
   subSections: AccordeonSubSection[];
 };
 
@@ -63,6 +66,9 @@ const ACCORDEON_SECTIONS: AccordeonSection[] = [
     titleFr: 'Formation classique',
     titleEn: 'Classic training',
     AccIcon: GraduationCap,
+    accentColor: '#0A2A66',
+    accentBg: 'bg-blue-50',
+    accentText: 'text-[#0A2A66]',
     subSections: [
       {
         titleFr: 'Cycle Licence',
@@ -98,6 +104,9 @@ const ACCORDEON_SECTIONS: AccordeonSection[] = [
     titleFr: 'Formation par alternance',
     titleEn: 'Work-Study training',
     AccIcon: Briefcase,
+    accentColor: '#D97706',
+    accentBg: 'bg-amber-50',
+    accentText: 'text-amber-700',
     subSections: [
       {
         titleFr: 'Cycle Licence',
@@ -119,6 +128,9 @@ const ACCORDEON_SECTIONS: AccordeonSection[] = [
     titleFr: 'Formation de base — Niveau BEPC / GCE O Level',
     titleEn: 'Basic training — BEPC / GCE O Level',
     AccIcon: Wrench,
+    accentColor: '#059669',
+    accentBg: 'bg-green-50',
+    accentText: 'text-green-700',
     subSections: [
       {
         titleFr: 'Cycle Technicien (15 000 FCFA)',
@@ -140,7 +152,7 @@ const ACCORDEON_SECTIONS: AccordeonSection[] = [
 type FieldKey =
   | 'filiere'
   | 'prenom' | 'nom' | 'dateNaissance' | 'lieuNaissance'
-  | 'region' | 'ville' | 'nationalite' | 'telephone' | 'email'
+  | 'region' | 'ville' | 'nationalite' | 'sexe' | 'telephone' | 'email'
   | 'situationMatrimoniale' | 'adresseAnneeScolaire'
   | 'nomPere' | 'regionPere' | 'departementPere'
   | 'nomMere' | 'regionMere' | 'departementMere'
@@ -209,6 +221,7 @@ export function ApplicationFormPage() {
     dateNaissance: '', lieuNaissance: '',
     region: '', ville: '',
     nationalite: 'Camerounaise',
+    sexe: '' as '' | 'M' | 'F',
     telephone: '', email: '',
     situationMatrimoniale: '' as '' | 'CELIBATAIRE' | 'MARIE',
     adresseAnneeScolaire: '',
@@ -250,6 +263,9 @@ export function ApplicationFormPage() {
 
   const [openAccordion, setOpenAccordion] = useState<string>('classique');
   const selectedCardRef = useRef<HTMLButtonElement>(null);
+
+  const [subStep2, setSubStep2] = useState<'A' | 'B' | 'C' | 'D' | 'summary'>('A');
+  useEffect(() => { if (currentStep === 2) setSubStep2('A'); }, [currentStep]);
 
   useEffect(() => {
     if (formData.filiere && selectedCardRef.current) {
@@ -515,7 +531,7 @@ export function ApplicationFormPage() {
                 ÉTAPE 1 — Choix du concours
             ═══════════════════════════════════════ */}
             {currentStep === 1 && (
-              <div className="space-y-5 pb-20">
+              <div className="space-y-5 pb-24">
                 <div>
                   <h3 className="text-2xl font-bold">{t('apply.programs.title')}</h3>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -537,332 +553,577 @@ export function ApplicationFormPage() {
                   onValueChange={(v) => setOpenAccordion(v || openAccordion)}
                   className="space-y-3"
                 >
-                  {ACCORDEON_SECTIONS.map((acc) => {
-                    const isOpen = openAccordion === acc.id;
-                    const gradientStyle: React.CSSProperties = {
-                      background: acc.id === 'classique'
-                        ? 'linear-gradient(135deg, #0A2A66 0%, #1E3E82 100%)'
-                        : acc.id === 'alternance'
-                        ? 'linear-gradient(135deg, #854F0B 0%, #A0621A 100%)'
-                        : 'linear-gradient(135deg, #14532D 0%, #166534 100%)',
-                    };
-                    return (
-                      <AccordionItem
-                        key={acc.id}
-                        value={acc.id}
-                        className="rounded-xl overflow-hidden border-0 shadow-md"
+                  {ACCORDEON_SECTIONS.map((acc) => (
+                    <AccordionItem
+                      key={acc.id}
+                      value={acc.id}
+                      className="rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm"
+                    >
+                      {/* ── Header accordéon : fond blanc + bordure gauche colorée ── */}
+                      <AccordionTrigger
+                        className="px-5 py-4 hover:no-underline hover:bg-gray-50/60 [&>svg]:text-gray-400 [&>svg]:transition-transform [&>svg]:duration-300"
+                        style={{ borderLeft: `4px solid ${acc.accentColor}` }}
                       >
-                        <AccordionTrigger
-                          className="px-5 py-4 hover:no-underline [&>svg]:text-white [&>svg]:opacity-90 [&>svg]:transition-transform [&>svg]:duration-300"
-                          style={gradientStyle}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-300 ${isOpen ? 'bg-white/25' : 'bg-white/15'}`}>
-                              <acc.AccIcon className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="text-left">
-                              <p className="font-bold text-sm md:text-base text-white leading-tight">{acc.titleFr}</p>
-                              <p className="text-xs text-white/70 italic">{acc.titleEn}</p>
-                            </div>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${acc.accentBg}`}>
+                            <acc.AccIcon className={`w-5 h-5 ${acc.accentText}`} />
                           </div>
-                        </AccordionTrigger>
+                          <div className="text-left">
+                            <p className={`font-bold text-sm md:text-base leading-tight ${acc.accentText}`}>{acc.titleFr}</p>
+                            <p className="text-xs text-gray-400 italic mt-0.5">{acc.titleEn}</p>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
 
-                        <AccordionContent className="px-4 md:px-5 pb-6 pt-4 bg-gray-50/50 border border-t-0 border-gray-200 rounded-b-xl">
-                          <div className="space-y-6">
-                            {acc.subSections.map((sub) => (
-                              <div key={sub.titleFr} className="space-y-3">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <h4 className="text-sm font-semibold text-foreground">
-                                    {sub.titleFr}
-                                    {sub.yaoundeOnly && (
-                                      <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                        — Yaoundé uniquement / Yaoundé only
-                                      </span>
-                                    )}
-                                  </h4>
-                                </div>
+                      <AccordionContent className="px-4 md:px-5 pb-6 pt-5 bg-gray-50/30 border-t border-gray-100">
+                        <div className="space-y-7">
+                          {acc.subSections.map((sub) => (
+                            <div key={sub.titleFr} className="space-y-3">
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  {sub.items.map(({ code, nomFr, nomEn, duree, Icon }) => {
-                                    const isSelected = formData.filiere === code;
-                                    const priceBadgeClass =
-                                      sub.montant === 15000 ? 'bg-green-100 text-green-700 border border-green-200' :
-                                      sub.montant === 20000 ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                                                              'bg-purple-100 text-purple-700 border border-purple-200';
-                                    return (
-                                      <button
-                                        key={code}
-                                        ref={isSelected ? selectedCardRef : undefined}
-                                        type="button"
-                                        onClick={() => {
-                                          setFormData((prev) => ({
-                                            ...prev,
-                                            filiere: code,
-                                            ...(prev.filiere !== code && {
-                                              typeDiplome: '',
-                                              documents: {},
-                                              centreDepotId: '',
-                                            }),
-                                          }));
-                                          clearFe('filiere');
-                                        }}
-                                        className={[
-                                          'relative rounded-xl border-2 p-4 text-left cursor-pointer select-none bg-white w-full',
-                                          'transition-all duration-200',
-                                          isSelected
-                                            ? 'border-[#0A2A66] bg-blue-50/60 shadow-lg ring-2 ring-[#0A2A66]/10'
-                                            : 'border-border hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5',
-                                        ].join(' ')}
-                                      >
-                                        {isSelected ? (
-                                          <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
-                                            <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                              {/* Titre sous-section avec séparateur */}
+                              <div className="flex items-center gap-3">
+                                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                                  {sub.titleFr}
+                                </span>
+                                <div className="flex-1 h-px bg-gray-200" />
+                                {sub.yaoundeOnly && (
+                                  <span className="text-[11px] text-gray-400 whitespace-nowrap"> Yaoundé only</span>
+                                )}
+                              </div>
+
+                              {/* Grille de cartes */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {sub.items.map(({ code, nomFr, nomEn, duree, Icon }) => {
+                                  const isSelected = formData.filiere === code;
+                                  return (
+                                    <button
+                                      key={code}
+                                      ref={isSelected ? selectedCardRef : undefined}
+                                      type="button"
+                                      onClick={() => {
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          filiere: code,
+                                          ...(prev.filiere !== code && {
+                                            typeDiplome: '',
+                                            documents: {},
+                                            centreDepotId: '',
+                                          }),
+                                        }));
+                                        clearFe('filiere');
+                                      }}
+                                      className={[
+                                        'relative rounded-xl text-left cursor-pointer select-none w-full p-4',
+                                        'transition-all duration-200',
+                                        isSelected
+                                          ? 'border-2 border-[#0A2A66] bg-[#EFF6FF] shadow-[0_0_0_4px_rgba(10,42,102,0.07)]'
+                                          : 'border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-blue-300',
+                                      ].join(' ')}
+                                    >
+                                      {/* Coche verte quand sélectionné */}
+                                      {isSelected && (
+                                        <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shadow-sm">
+                                          <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                                        </div>
+                                      )}
+
+                                      {/* Icône + Code + Durée + Noms */}
+                                      <div className="flex items-start gap-3 pr-8 mb-3">
+                                        <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${sub.iconBg}`}>
+                                          <Icon className={`w-5 h-5 ${sub.iconColor}`} />
+                                        </div>
+                                        <div className="flex-1 min-w-0 pt-0.5">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-[#0A2A66] text-white' : 'bg-primary/10 text-primary'}`}>
+                                              {code}
+                                            </span>
+                                            <span className="text-xs text-gray-400">
+                                              {duree} {t('apply.programs.years')}
+                                            </span>
                                           </div>
-                                        ) : (
-                                          <span className={`absolute top-3 right-3 text-xs font-bold px-2 py-0.5 rounded-full ${priceBadgeClass}`}>
-                                            {sub.montant.toLocaleString('fr-FR')} F
+                                          <p className="text-[15px] font-bold leading-snug text-gray-900">{nomFr}</p>
+                                          <p className="text-[13px] text-gray-400 italic mt-0.5 leading-snug">{nomEn}</p>
+                                        </div>
+                                      </div>
+
+                                      {/* Bas de carte : prix + badge Yaoundé */}
+                                      <div className="flex items-center justify-between pt-2.5 border-t border-gray-100/80">
+                                        <span className={`text-sm font-bold ${isSelected ? 'text-[#0A2A66]' : 'text-green-600'}`}>
+                                          {sub.montant.toLocaleString('fr-FR')} FCFA
+                                        </span>
+                                        {sub.yaoundeOnly && (
+                                          <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                                             <span className="hidden sm:inline">Yaoundé only</span>
                                           </span>
                                         )}
-
-                                        <div className="flex gap-3 pr-10">
-                                          <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${sub.iconBg}`}>
-                                            <Icon className={`w-5 h-5 ${sub.iconColor}`} />
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1.5">
-                                              <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                                                {code}
-                                              </span>
-                                              <span className="text-xs text-muted-foreground">
-                                                {duree} {t('apply.programs.years')}
-                                              </span>
-                                            </div>
-                                            <p className="text-sm font-semibold leading-snug text-foreground">{nomFr}</p>
-                                            <p className="text-xs text-muted-foreground italic mt-0.5 leading-snug">{nomEn}</p>
-                                          </div>
-                                        </div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
                               </div>
-                            ))}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    );
-                  })}
+
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
                 </Accordion>
               </div>
             )}
 
             {/* ═══════════════════════════════════════
-                ÉTAPE 2 — Informations personnelles
+                ÉTAPE 2 — Informations personnelles (sous-étapes A→D→Récap)
             ═══════════════════════════════════════ */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <h3 className="text-2xl font-bold mb-6">{t('apply.identity.title')}</h3>
+            {currentStep === 2 && (() => {
+              const count2A = [formData.prenom, formData.nom, formData.dateNaissance, formData.lieuNaissance, formData.nationalite, formData.sexe].filter(Boolean).length;
+              const count2B = [formData.telephone, formData.email, formData.adresseAnneeScolaire, formData.region, formData.ville].filter(Boolean).length;
+              const count2C = [formData.nomPere, formData.regionPere, formData.nomMere, formData.regionMere].filter(Boolean).length;
+              const count2D = [formData.situationMatrimoniale, formData.langueComposition, formData.activitesExtraScolaires].filter(Boolean).length;
 
-                <div className="grid md:grid-cols-2 gap-6">
+              const subStepOrder = { A: 0, B: 1, C: 2, D: 3, summary: 4 } as const;
+              const currentIdx = subStepOrder[subStep2];
 
-                  <div className="space-y-2">
-                    <Label htmlFor="prenom">{t('apply.identity.firstName')}</Label>
-                    <Input id="prenom" value={formData.prenom} className={errClass('prenom')}
-                      onChange={(e) => { setFormData({ ...formData, prenom: e.target.value }); clearFe('prenom'); }} />
-                    {fe('prenom') && <p className="text-sm text-destructive">{fe('prenom')}</p>}
-                  </div>
+              const SUB_META = [
+                { id: 'A' as const, label: 'Identité',    total: 6, count: count2A },
+                { id: 'B' as const, label: 'Coordonnées', total: 5, count: count2B },
+                { id: 'C' as const, label: 'Famille',     total: 4, count: count2C },
+                { id: 'D' as const, label: 'Autres',      total: 3, count: count2D },
+              ];
 
-                  <div className="space-y-2">
-                    <Label htmlFor="nom">{t('apply.identity.lastName')}</Label>
-                    <Input id="nom" value={formData.nom} className={errClass('nom')}
-                      onChange={(e) => { setFormData({ ...formData, nom: e.target.value }); clearFe('nom'); }} />
-                    {fe('nom') && <p className="text-sm text-destructive">{fe('nom')}</p>}
-                  </div>
+              const goSubNext = () => {
+                if (subStep2 === 'A') setSubStep2('B');
+                else if (subStep2 === 'B') setSubStep2('C');
+                else if (subStep2 === 'C') setSubStep2('D');
+                else if (subStep2 === 'D') setSubStep2('summary');
+              };
+              const goSubPrev = () => {
+                if (subStep2 === 'A') setCurrentStep(1);
+                else if (subStep2 === 'B') setSubStep2('A');
+                else if (subStep2 === 'C') setSubStep2('B');
+                else if (subStep2 === 'D') setSubStep2('C');
+                else if (subStep2 === 'summary') setSubStep2('D');
+              };
 
-                  <div className="space-y-2">
-                    <Label htmlFor="dateNaissance">{t('apply.identity.birthDate')}</Label>
-                    
-                    <Input
-                      id="dateNaissance"
-                      type="date"
-                      value={formData.dateNaissance}
-                      className={errClass('dateNaissance')}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setFormData({ ...formData, dateNaissance: val });
-                        clearFe('dateNaissance');
-                        if (formData.filiere && val) {
-                          const ageErr = validateAge(formData.filiere, val);
-                          if (ageErr) setFieldErrors((prev) => ({ ...prev, dateNaissance: [ageErr] }));
-                        }
-                      }}
-                    />
-                    {fe('dateNaissance') && <p className="text-sm text-destructive">{fe('dateNaissance')}</p>}
-                  </div>
+              return (
+                <div className="space-y-6">
 
-                  <div className="space-y-2">
-                    <Label htmlFor="lieuNaissance">{t('apply.identity.birthPlace')}</Label>
-                    <Input id="lieuNaissance" value={formData.lieuNaissance} className={errClass('lieuNaissance')}
-                      onChange={(e) => { setFormData({ ...formData, lieuNaissance: e.target.value }); clearFe('lieuNaissance'); }} />
-                    {fe('lieuNaissance') && <p className="text-sm text-destructive">{fe('lieuNaissance')}</p>}
-                  </div>
+                  {/* ── Barre de progression sous-étapes ── */}
+                  {subStep2 !== 'summary' && (
+                    <div className="flex items-center bg-gray-50 rounded-xl p-2 gap-1">
+                      {SUB_META.map((s, i) => {
+                        const idx = subStepOrder[s.id];
+                        const isDone = idx < currentIdx;
+                        const isCurrent = idx === currentIdx;
+                        return (
+                          <div key={s.id} className="flex items-center flex-1 min-w-0">
+                            <button
+                              type="button"
+                              onClick={() => isDone && setSubStep2(s.id)}
+                              disabled={!isDone && !isCurrent}
+                              className={[
+                                'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all w-full justify-center',
+                                isCurrent ? 'bg-white shadow-sm text-[#0A2A66] border border-[#0A2A66]/20' :
+                                isDone    ? 'text-green-700 hover:bg-white cursor-pointer' :
+                                            'text-gray-400 cursor-default',
+                              ].join(' ')}
+                            >
+                              <span className={[
+                                'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0',
+                                isCurrent ? 'bg-[#0A2A66] text-white' :
+                                isDone    ? 'bg-green-500 text-white' :
+                                            'bg-gray-200 text-gray-400',
+                              ].join(' ')}>
+                                {isDone ? '✓' : `${i + 1}`}
+                              </span>
+                              <span className="hidden sm:inline truncate">{s.label}</span>
+                            </button>
+                            {i < SUB_META.length - 1 && (
+                              <div className={`h-px w-3 shrink-0 mx-0.5 ${idx < currentIdx ? 'bg-green-300' : 'bg-gray-200'}`} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
-                  <div className="space-y-2">
-                    <Label>{t('apply.identity.region')}</Label>
-                    <Select value={formData.region}
-                      onValueChange={(v) => { setFormData({ ...formData, region: v }); clearFe('region'); }}>
-                      <SelectTrigger className={errClass('region')}>
-                        <SelectValue placeholder={t('apply.identity.regionPlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    {fe('region') && <p className="text-sm text-destructive">{fe('region')}</p>}
-                  </div>
+                  {/* ══ 2A — IDENTITÉ ══════════════════════════════════════ */}
+                  {subStep2 === 'A' && (
+                    <div className="space-y-5">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">Identité</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">Informations d'état civil</p>
+                        </div>
+                        <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+                          {count2A} / 6 complétés
+                        </span>
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="ville">{t('apply.identity.city')}</Label>
-                    <Input id="ville" value={formData.ville} className={errClass('ville')}
-                      onChange={(e) => { setFormData({ ...formData, ville: e.target.value }); clearFe('ville'); }} />
-                    {fe('ville') && <p className="text-sm text-destructive">{fe('ville')}</p>}
-                  </div>
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="nom">{t('apply.identity.lastName')} <span className="text-destructive">*</span></Label>
+                          <Input id="nom" value={formData.nom} className={errClass('nom')}
+                            onChange={(e) => { setFormData({ ...formData, nom: e.target.value }); clearFe('nom'); }} />
+                          {fe('nom') && <p className="text-sm text-destructive">{fe('nom')}</p>}
+                        </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="nationalite">{t('apply.identity.nationality')}</Label>
-                    <Input id="nationalite" value={formData.nationalite} className={errClass('nationalite')}
-                      onChange={(e) => { setFormData({ ...formData, nationalite: e.target.value }); clearFe('nationalite'); }} />
-                    {fe('nationalite') && <p className="text-sm text-destructive">{fe('nationalite')}</p>}
-                  </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="prenom">{t('apply.identity.firstName')} <span className="text-destructive">*</span></Label>
+                          <Input id="prenom" value={formData.prenom} className={errClass('prenom')}
+                            onChange={(e) => { setFormData({ ...formData, prenom: e.target.value }); clearFe('prenom'); }} />
+                          {fe('prenom') && <p className="text-sm text-destructive">{fe('prenom')}</p>}
+                        </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="telephone">{t('apply.identity.phone')}</Label>
-                    <Input id="telephone" type="tel" placeholder={t('apply.identity.phonePlaceholder')}
-                      value={formData.telephone} className={errClass('telephone')}
-                      onChange={(e) => { setFormData({ ...formData, telephone: e.target.value }); clearFe('telephone'); }} />
-                    {fe('telephone') && <p className="text-sm text-destructive">{fe('telephone')}</p>}
-                  </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="dateNaissance">{t('apply.identity.birthDate')} <span className="text-destructive">*</span></Label>
+                          {config && (
+                            <p className="text-xs text-gray-400">Âge min. : <strong>{config.ageMinimum} ans</strong> au 1er jan. 2025</p>
+                          )}
+                          <Input id="dateNaissance" type="date" value={formData.dateNaissance} className={errClass('dateNaissance')}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setFormData({ ...formData, dateNaissance: val });
+                              clearFe('dateNaissance');
+                              if (formData.filiere && val) {
+                                const ageErr = validateAge(formData.filiere, val);
+                                if (ageErr) setFieldErrors((prev) => ({ ...prev, dateNaissance: [ageErr] }));
+                              }
+                            }}
+                          />
+                          {fe('dateNaissance') && <p className="text-sm text-destructive">{fe('dateNaissance')}</p>}
+                        </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="email">{t('apply.identity.email')}</Label>
-                    <Input id="email" type="email" value={formData.email} className={errClass('email')}
-                      onChange={(e) => { setFormData({ ...formData, email: e.target.value }); clearFe('email'); }} />
-                    {fe('email') && <p className="text-sm text-destructive">{fe('email')}</p>}
-                  </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="lieuNaissance">{t('apply.identity.birthPlace')} <span className="text-destructive">*</span></Label>
+                          <Input id="lieuNaissance" value={formData.lieuNaissance} className={errClass('lieuNaissance')}
+                            onChange={(e) => { setFormData({ ...formData, lieuNaissance: e.target.value }); clearFe('lieuNaissance'); }} />
+                          {fe('lieuNaissance') && <p className="text-sm text-destructive">{fe('lieuNaissance')}</p>}
+                        </div>
 
-                  {/* Situation matrimoniale */}
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>{t('apply.identity.maritalStatus')}</Label>
-                    <div className="flex gap-4">
-                      {(['CELIBATAIRE', 'MARIE'] as const).map((val) => (
-                        <button
-                          key={val}
-                          type="button"
-                          onClick={() => { setFormData({ ...formData, situationMatrimoniale: val }); clearFe('situationMatrimoniale'); }}
-                          className={[
-                            'flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors',
-                            formData.situationMatrimoniale === val
-                              ? 'border-primary bg-primary/5 text-primary'
-                              : 'border-border text-muted-foreground hover:border-primary/40',
-                          ].join(' ')}
-                        >
-                          {val === 'CELIBATAIRE' ? t('apply.identity.single') : t('apply.identity.married')}
-                        </button>
+                        {/* Nationalité — toggle */}
+                        <div className="space-y-2">
+                          <Label>{t('apply.identity.nationality')} <span className="text-destructive">*</span></Label>
+                          <div className="flex gap-3">
+                            {(['Camerounaise', 'Étrangère'] as const).map((val) => (
+                              <button key={val} type="button"
+                                onClick={() => setFormData({ ...formData, nationalite: val })}
+                                className={[
+                                  'flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors',
+                                  formData.nationalite === val
+                                    ? 'border-[#0A2A66] bg-[#EFF6FF] text-[#0A2A66]'
+                                    : 'border-gray-200 text-gray-500 hover:border-gray-300',
+                                ].join(' ')}
+                              >
+                                {val === 'Camerounaise' ? ' Camerounais(e)' : ' Étranger(e)'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Sexe — toggle */}
+                        <div className="space-y-2">
+                          <Label>Sexe <span className="text-destructive">*</span></Label>
+                          <div className="flex gap-3">
+                            {([['M', 'Masculin'], ['F', ' Féminin']] as const).map(([val, label]) => (
+                              <button key={val} type="button"
+                                onClick={() => setFormData({ ...formData, sexe: val })}
+                                className={[
+                                  'flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors',
+                                  formData.sexe === val
+                                    ? 'border-[#0A2A66] bg-[#EFF6FF] text-[#0A2A66]'
+                                    : 'border-gray-200 text-gray-500 hover:border-gray-300',
+                                ].join(' ')}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ══ 2B — COORDONNÉES ═══════════════════════════════════ */}
+                  {subStep2 === 'B' && (
+                    <div className="space-y-5">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">Coordonnées</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">Contact et localisation</p>
+                        </div>
+                        <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+                          {count2B} / 5 complétés
+                        </span>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="telephone">{t('apply.identity.phone')} <span className="text-destructive">*</span></Label>
+                          <Input id="telephone" type="tel" placeholder={t('apply.identity.phonePlaceholder')}
+                            value={formData.telephone} className={errClass('telephone')}
+                            onChange={(e) => { setFormData({ ...formData, telephone: e.target.value }); clearFe('telephone'); }} />
+                          {fe('telephone') && <p className="text-sm text-destructive">{fe('telephone')}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="email">{t('apply.identity.email')} <span className="text-destructive">*</span></Label>
+                          <Input id="email" type="email" value={formData.email} className={errClass('email')}
+                            onChange={(e) => { setFormData({ ...formData, email: e.target.value }); clearFe('email'); }} />
+                          {fe('email') && <p className="text-sm text-destructive">{fe('email')}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>{t('apply.identity.region')}</Label>
+                          <Select value={formData.region} onValueChange={(v) => { setFormData({ ...formData, region: v }); clearFe('region'); }}>
+                            <SelectTrigger className={errClass('region')}>
+                              <SelectValue placeholder={t('apply.identity.regionPlaceholder')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="ville">{t('apply.identity.city')}</Label>
+                          <Input id="ville" value={formData.ville}
+                            onChange={(e) => setFormData({ ...formData, ville: e.target.value })} />
+                        </div>
+
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="adresseAnneeScolaire">{t('apply.identity.academicAddress')}</Label>
+                          <Input id="adresseAnneeScolaire" value={formData.adresseAnneeScolaire}
+                            onChange={(e) => setFormData({ ...formData, adresseAnneeScolaire: e.target.value })} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ══ 2C — FAMILLE ═══════════════════════════════════════ */}
+                  {subStep2 === 'C' && (
+                    <div className="space-y-5">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">Famille</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">Informations parentales</p>
+                        </div>
+                        <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+                          {count2C} / 4 complétés
+                        </span>
+                      </div>
+
+                      <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
+                        <AlertCircle className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                        <p className="text-xs text-blue-700">Ces informations figurent sur la fiche officielle — leur saisie est recommandée mais optionnelle.</p>
+                      </div>
+
+                      <div className="space-y-5">
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">{t('apply.identity.fatherSection')}</p>
+                          <div className="grid md:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                              <Label htmlFor="nomPere">{t('apply.identity.fatherName')}</Label>
+                              <Input id="nomPere" value={formData.nomPere}
+                                onChange={(e) => setFormData({ ...formData, nomPere: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="regionPere">{t('apply.identity.fatherRegion')}</Label>
+                              <Input id="regionPere" value={formData.regionPere}
+                                onChange={(e) => setFormData({ ...formData, regionPere: e.target.value })} />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">{t('apply.identity.motherSection')}</p>
+                          <div className="grid md:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                              <Label htmlFor="nomMere">{t('apply.identity.motherName')}</Label>
+                              <Input id="nomMere" value={formData.nomMere}
+                                onChange={(e) => setFormData({ ...formData, nomMere: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="regionMere">{t('apply.identity.motherRegion')}</Label>
+                              <Input id="regionMere" value={formData.regionMere}
+                                onChange={(e) => setFormData({ ...formData, regionMere: e.target.value })} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ══ 2D — AUTRES ════════════════════════════════════════ */}
+                  {subStep2 === 'D' && (
+                    <div className="space-y-5">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">Autres informations</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">Situation et langue d'examen</p>
+                        </div>
+                        <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+                          {count2D} / 3 complétés
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>{t('apply.identity.maritalStatus')}</Label>
+                        <div className="flex gap-3">
+                          {(['CELIBATAIRE', 'MARIE'] as const).map((val) => (
+                            <button key={val} type="button"
+                              onClick={() => { setFormData({ ...formData, situationMatrimoniale: val }); clearFe('situationMatrimoniale'); }}
+                              className={[
+                                'flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors',
+                                formData.situationMatrimoniale === val
+                                  ? 'border-[#0A2A66] bg-[#EFF6FF] text-[#0A2A66]'
+                                  : 'border-gray-200 text-gray-500 hover:border-gray-300',
+                              ].join(' ')}
+                            >
+                              {val === 'CELIBATAIRE' ? t('apply.identity.single') : t('apply.identity.married')}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Languages className="w-4 h-4 text-primary" />
+                          <Label className="font-semibold">{t('apply.programs.langueComposition')}</Label>
+                        </div>
+                        <p className="text-xs text-gray-400">{t('apply.programs.langueCompositionHint')}</p>
+                        <div className="flex gap-3">
+                          {(['FRANCAIS', 'ANGLAIS'] as const).map((l) => (
+                            <button key={l} type="button"
+                              onClick={() => { setFormData({ ...formData, langueComposition: l }); clearFe('langueComposition'); }}
+                              className={[
+                                'flex-1 py-3 rounded-xl border-2 text-sm font-semibold transition-all duration-200',
+                                formData.langueComposition === l
+                                  ? 'border-[#0A2A66] bg-[#0A2A66] text-white shadow-md'
+                                  : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white',
+                              ].join(' ')}
+                            >
+                              {l === 'FRANCAIS' ? '🇫 Français' : '🇬English'}
+                            </button>
+                          ))}
+                        </div>
+                        {fe('langueComposition') && <p className="text-sm text-destructive">{fe('langueComposition')}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="activitesExtraScolaires">{t('apply.academic.extraActivities')}</Label>
+                        <Textarea id="activitesExtraScolaires"
+                          placeholder={t('apply.academic.extraActivitiesPlaceholder')}
+                          value={formData.activitesExtraScolaires}
+                          onChange={(e) => setFormData({ ...formData, activitesExtraScolaires: e.target.value })}
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ══ RÉCAPITULATIF ══════════════════════════════════════ */}
+                  {subStep2 === 'summary' && (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">Récapitulatif</h3>
+                        <p className="text-sm text-gray-500 mt-0.5">Vérifiez vos informations avant de continuer vers l'étape 3</p>
+                      </div>
+
+                      {/* Bloc 2A */}
+                      {[
+                        {
+                          id: 'A', label: '2A — Identité', count: count2A, optional: false,
+                          onEdit: () => setSubStep2('A'),
+                          rows: [
+                            ['Nom', formData.nom], ['Prénom', formData.prenom],
+                            ['Date de naissance', formData.dateNaissance], ['Lieu de naissance', formData.lieuNaissance],
+                            ['Nationalité', formData.nationalite], ['Sexe', formData.sexe === 'M' ? 'Masculin' : formData.sexe === 'F' ? 'Féminin' : ''],
+                          ],
+                        },
+                        {
+                          id: 'B', label: '2B — Coordonnées', count: count2B, optional: false,
+                          onEdit: () => setSubStep2('B'),
+                          rows: [
+                            ['Téléphone', formData.telephone], ['Email', formData.email],
+                            ['Région', formData.region], ['Ville', formData.ville],
+                            ['Adresse académique', formData.adresseAnneeScolaire],
+                          ],
+                        },
+                        {
+                          id: 'C', label: '2C — Famille', count: count2C, optional: true,
+                          onEdit: () => setSubStep2('C'),
+                          rows: [
+                            ['Père', formData.nomPere], ['Région père', formData.regionPere],
+                            ['Mère', formData.nomMere], ['Région mère', formData.regionMere],
+                          ],
+                        },
+                        {
+                          id: 'D', label: '2D — Autres', count: count2D, optional: true,
+                          onEdit: () => setSubStep2('D'),
+                          rows: [
+                            ['Situation', formData.situationMatrimoniale === 'CELIBATAIRE' ? 'Célibataire' : formData.situationMatrimoniale === 'MARIE' ? 'Marié(e)' : ''],
+                            ["Langue d'examen", formData.langueComposition === 'FRANCAIS' ? '🇫🇷 Français' : formData.langueComposition === 'ANGLAIS' ? '🇬🇧 English' : ''],
+                            ['Activités', formData.activitesExtraScolaires],
+                          ],
+                        },
+                      ].map((bloc) => (
+                        <div key={bloc.id} className="rounded-xl border border-gray-200 overflow-hidden">
+                          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold ${bloc.count > 0 || !bloc.optional ? 'bg-green-500' : 'bg-gray-300'}`}>
+                                {bloc.count > 0 ? '✓' : bloc.optional ? '○' : '!'}
+                              </span>
+                              <span className="text-sm font-semibold text-gray-700">{bloc.label}</span>
+                              {bloc.optional && bloc.count === 0 && (
+                                <span className="text-[11px] text-gray-400">(optionnel)</span>
+                              )}
+                            </div>
+                            <button type="button" onClick={bloc.onEdit}
+                              className="text-xs text-[#0A2A66] font-semibold hover:underline">
+                              Modifier
+                            </button>
+                          </div>
+                          <div className="px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-2">
+                            {bloc.rows.filter(([, v]) => v).map(([label, value]) => (
+                              <div key={label} className={value && value.length > 30 ? 'col-span-2' : ''}>
+                                <p className="text-[11px] text-gray-400 leading-none mb-0.5">{label}</p>
+                                <p className="text-sm font-medium text-gray-800">{value || '—'}</p>
+                              </div>
+                            ))}
+                            {bloc.rows.every(([, v]) => !v) && (
+                              <p className="col-span-2 text-sm text-gray-400 italic">Aucune information saisie</p>
+                            )}
+                          </div>
+                        </div>
                       ))}
                     </div>
+                  )}
+
+                  {/* ── Navigation interne ── */}
+                  <div className="flex items-center justify-between pt-5 border-t border-gray-100 mt-2">
+                    <Button variant="outline" type="button" onClick={goSubPrev}>
+                      <ChevronLeft className="w-4 h-4 mr-2" />
+                      {subStep2 === 'A' ? t('common.previous') : 'Précédent'}
+                    </Button>
+
+                    {subStep2 === 'summary' ? (
+                      <Button type="button" onClick={() => setCurrentStep(3)}
+                        className="gap-2 bg-[#0A2A66] hover:bg-[#0A2A66]/90 text-white">
+                        Confirmer et continuer
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <Button type="button" onClick={goSubNext} className="gap-2">
+                        {subStep2 === 'D' ? 'Voir le récapitulatif' : 'Suivant'}
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="adresseAnneeScolaire">{t('apply.identity.academicAddress')}</Label>
-                    <Input id="adresseAnneeScolaire" value={formData.adresseAnneeScolaire}
-                      onChange={(e) => setFormData({ ...formData, adresseAnneeScolaire: e.target.value })} />
-                  </div>
                 </div>
-
-                {/* Filiation — Père */}
-                <div className="pt-2">
-                  <p className="text-sm font-semibold text-muted-foreground mb-3">{t('apply.identity.fatherSection')}</p>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nomPere">{t('apply.identity.fatherName')}</Label>
-                      <Input id="nomPere" value={formData.nomPere}
-                        onChange={(e) => setFormData({ ...formData, nomPere: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="regionPere">{t('apply.identity.fatherRegion')}</Label>
-                      <Input id="regionPere" value={formData.regionPere}
-                        onChange={(e) => setFormData({ ...formData, regionPere: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="departementPere">{t('apply.identity.fatherDept')}</Label>
-                      <Input id="departementPere" value={formData.departementPere}
-                        onChange={(e) => setFormData({ ...formData, departementPere: e.target.value })} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Filiation — Mère */}
-                <div className="pt-2">
-                  <p className="text-sm font-semibold text-muted-foreground mb-3">{t('apply.identity.motherSection')}</p>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nomMere">{t('apply.identity.motherName')}</Label>
-                      <Input id="nomMere" value={formData.nomMere}
-                        onChange={(e) => setFormData({ ...formData, nomMere: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="regionMere">{t('apply.identity.motherRegion')}</Label>
-                      <Input id="regionMere" value={formData.regionMere}
-                        onChange={(e) => setFormData({ ...formData, regionMere: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="departementMere">{t('apply.identity.motherDept')}</Label>
-                      <Input id="departementMere" value={formData.departementMere}
-                        onChange={(e) => setFormData({ ...formData, departementMere: e.target.value })} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Langue de composition */}
-                <div className="space-y-2 pt-2">
-                  <div className="flex items-center gap-2">
-                    <Languages className="w-4 h-4 text-primary" />
-                    <Label className="font-semibold">{t('apply.programs.langueComposition')}</Label>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{t('apply.programs.langueCompositionHint')}</p>
-                  <div className="flex gap-3">
-                    {(['FRANCAIS', 'ANGLAIS'] as const).map((l) => (
-                      <button
-                        key={l}
-                        type="button"
-                        onClick={() => { setFormData({ ...formData, langueComposition: l }); clearFe('langueComposition'); }}
-                        className={[
-                          'flex-1 py-3 rounded-xl border-2 text-sm font-semibold transition-all duration-200',
-                          formData.langueComposition === l
-                            ? 'border-primary bg-primary text-white shadow-md'
-                            : 'border-border text-muted-foreground hover:border-primary/40 bg-white',
-                        ].join(' ')}
-                      >
-                        {l === 'FRANCAIS' ? '🇫🇷 Français' : '🇬🇧 English'}
-                      </button>
-                    ))}
-                  </div>
-                  {fe('langueComposition') && <p className="text-sm text-destructive">{fe('langueComposition')}</p>}
-                </div>
-
-                {/* Activités extra-scolaires */}
-                <div className="space-y-2">
-                  <Label htmlFor="activitesExtraScolaires">{t('apply.academic.extraActivities')}</Label>
-                  <Textarea
-                    id="activitesExtraScolaires"
-                    placeholder={t('apply.academic.extraActivitiesPlaceholder')}
-                    value={formData.activitesExtraScolaires}
-                    onChange={(e) => setFormData({ ...formData, activitesExtraScolaires: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* ═══════════════════════════════════════
                 ÉTAPE 3 — Informations académiques
@@ -921,7 +1182,7 @@ export function ApplicationFormPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="mention">
-                      Mention / Spécialité{' '}
+                      Mention  {' '}
                       <span className="text-muted-foreground text-xs font-normal">(optionnel / optional)</span>
                     </Label>
                     <Input
@@ -1099,15 +1360,7 @@ export function ApplicationFormPage() {
                     {t('apply.documents.center')} <span className="text-destructive">*</span>
                   </Label>
                   <p className="text-xs text-muted-foreground">{t('apply.documents.centerHint')}</p>
-                  {centresAutorises !== 'ALL' && (
-                    <div className="flex items-center gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>
-                        Ce concours est organisé uniquement dans les centres listés ci-dessous.{' '}
-                        / This programme is available only at the centres listed below.
-                      </span>
-                    </div>
-                  )}
+                  
                   <Select
                     value={formData.centreDepotId}
                     onValueChange={(v) => { setFormData({ ...formData, centreDepotId: v }); clearFe('centreDepotId'); }}
@@ -1136,45 +1389,47 @@ export function ApplicationFormPage() {
               </div>
             )}
 
-            {/* ── Navigation ── */}
-            <div className="flex items-center justify-between mt-8 pt-6 border-t">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 1 || isSubmitting}
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                {t('common.previous')}
-              </Button>
+            {/* ── Navigation globale (masquée à l'étape 2 — nav interne aux sous-étapes) ── */}
+            {currentStep !== 2 && (
+              <div className="flex items-center justify-between mt-8 pt-6 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1 || isSubmitting}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  {t('common.previous')}
+                </Button>
 
-              {currentStep < 5 ? (
-                <Button
-                  onClick={handleNext}
-                  disabled={currentStep === 1 && !formData.filiere}
-                >
-                  {t('common.next')}
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || !formData.numeroRecuCampost.trim()}
-                  className="gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('apply.submitting')}
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      {t('apply.submit')}
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+                {currentStep < 5 ? (
+                  <Button
+                    onClick={handleNext}
+                    disabled={currentStep === 1 && !formData.filiere}
+                  >
+                    {t('common.next')}
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || !formData.numeroRecuCampost.trim()}
+                    className="gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t('apply.submitting')}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        {t('apply.submit')}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
 
           </CardContent>
         </Card>
@@ -1186,30 +1441,35 @@ export function ApplicationFormPage() {
           .flatMap((a) => a.subSections.flatMap((s) => s.items))
           .find((it) => it.code === formData.filiere);
         return (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-2xl">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-[#0A2A66] shadow-[0_-4px_24px_rgba(0,0,0,0.10)]">
             <div className="max-w-4xl mx-auto px-4 md:px-6 py-3 flex items-center gap-4">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <CheckCircle className="w-4 h-4 text-green-600" />
+              {/* Icône check animée */}
+              <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0 ring-2 ring-green-200">
+                <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
+              {/* Nom de la filière */}
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground leading-none mb-0.5">Filière sélectionnée</p>
-                <p className="text-sm font-bold text-foreground truncate">
+                <p className="text-[11px] text-gray-400 leading-none mb-0.5 uppercase tracking-wide">
+                  Filière sélectionnée / Selected programme
+                </p>
+                <p className="text-sm font-bold text-gray-900 truncate">
                   {selected?.nomFr ?? formData.filiere}
                   {selected?.nomEn && (
-                    <span className="font-normal text-muted-foreground"> / {selected.nomEn}</span>
+                    <span className="font-normal text-gray-400 text-xs"> / {selected.nomEn}</span>
                   )}
                 </p>
               </div>
+              {/* Prix CAMPOST */}
               <div className="text-right shrink-0 hidden sm:block">
-                <p className="text-xs text-muted-foreground">Frais CAMPOST</p>
+                <p className="text-[11px] text-gray-400 uppercase tracking-wide">Frais CAMPOST</p>
                 <p className="text-base font-bold text-green-600">
                   {montant.toLocaleString('fr-FR')} FCFA
                 </p>
               </div>
+              {/* Bouton Continuer */}
               <Button
                 onClick={handleNext}
-                className="shrink-0 gap-1.5"
-                style={{ background: 'linear-gradient(135deg, #0A2A66 0%, #1E3E82 100%)' }}
+                className="shrink-0 gap-1.5 bg-[#0A2A66] hover:bg-[#0A2A66]/90 text-white"
               >
                 Continuer
                 <ChevronRight className="w-4 h-4" />
