@@ -132,7 +132,7 @@ model Candidature {
   departementMere  String?
 
   // ── Informations académiques ───────────────────
-  typeDiplome    String   // "BAC" | "GCE_AL" | "EQUIVALENT"
+  typeDiplome    String   // Valeur parmi les diplômes définis dans concours-config
   serieBac       String?  // Obligatoire si BAC
   anneeObtention Int
   etablissement  String

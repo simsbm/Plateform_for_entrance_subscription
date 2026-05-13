@@ -22,13 +22,13 @@ import { candidatureApi, centresApi, pdfApi } from '../../lib/api';
 import type { CentreDepot } from '../../lib/api';
 import { LangSwitcher } from '../components/LangSwitcher';
 import axios from 'axios';
+import logo from '../../img/cropped-logo-supptic.png';
 import {
   getConcoursConfig,
   getDiplomesAcceptes,
   getDocumentsRequis,
   getCentresAutorises,
   validateAge,
-  FRAIS_FIXES,
 } from '../../lib/concours-config';
 
 // ─── Types accordéons (structure visuelle step 1) ────────────────────────────
@@ -165,7 +165,7 @@ type FieldErrors = Partial<Record<FieldKey, string[]>>;
 const STEP_FIELDS: Record<number, FieldKey[]> = {
   1: ['filiere'],
   2: ['prenom', 'nom', 'dateNaissance', 'lieuNaissance', 'region', 'ville',
-      'nationalite', 'telephone', 'email', 'situationMatrimoniale',
+      'nationalite', 'sexe', 'telephone', 'email', 'situationMatrimoniale',
       'adresseAnneeScolaire', 'nomPere', 'regionPere', 'departementPere',
       'nomMere', 'regionMere', 'departementMere', 'langueComposition'],
   3: ['typeDiplome', 'anneeObtention', 'etablissement'],
@@ -259,7 +259,7 @@ export function ApplicationFormPage() {
       .then(({ data }) => setCentres(data.data))
       .catch(() => toast.error(t('apply.documents.centerLoadError')))
       .finally(() => setCentresLoading(false));
-  }, [t]);
+  }, []);
 
   const [openAccordion, setOpenAccordion] = useState<string>('classique');
   const selectedCardRef = useRef<HTMLButtonElement>(null);
@@ -322,6 +322,7 @@ export function ApplicationFormPage() {
         region:            formData.region,
         ville:             formData.ville,
         nationalite:       formData.nationalite,
+        sexe:              formData.sexe,
         telephone:         formData.telephone,
         email:             formData.email,
         typeDiplome:       formData.typeDiplome,
@@ -448,8 +449,8 @@ export function ApplicationFormPage() {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-18 h-18 rounded-lg flex items-center justify-center">
-              <img src="src\img\cropped-logo-supptic.png" alt="logo of supptic" />
+            <div className="w-16 h-16 rounded-lg flex items-center justify-center">
+              <img src={logo} alt="logo of supptic" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-primary">{t('apply.header')}</h1>
@@ -522,7 +523,7 @@ export function ApplicationFormPage() {
                   onClick={() => setCurrentStep(1)}
                   className="shrink-0 text-xs h-8 px-3"
                 >
-                  Modifier
+                  Modifier / Edit
                 </Button>
               </div>
             )}
@@ -678,17 +679,17 @@ export function ApplicationFormPage() {
             {currentStep === 2 && (() => {
               const count2A = [formData.prenom, formData.nom, formData.dateNaissance, formData.lieuNaissance, formData.nationalite, formData.sexe].filter(Boolean).length;
               const count2B = [formData.telephone, formData.email, formData.adresseAnneeScolaire, formData.region, formData.ville].filter(Boolean).length;
-              const count2C = [formData.nomPere, formData.regionPere, formData.nomMere, formData.regionMere].filter(Boolean).length;
+              const count2C = [formData.nomPere, formData.regionPere, formData.departementPere, formData.nomMere, formData.regionMere, formData.departementMere].filter(Boolean).length;
               const count2D = [formData.situationMatrimoniale, formData.langueComposition, formData.activitesExtraScolaires].filter(Boolean).length;
 
               const subStepOrder = { A: 0, B: 1, C: 2, D: 3, summary: 4 } as const;
               const currentIdx = subStepOrder[subStep2];
 
               const SUB_META = [
-                { id: 'A' as const, label: 'Identité',    total: 6, count: count2A },
-                { id: 'B' as const, label: 'Coordonnées', total: 5, count: count2B },
-                { id: 'C' as const, label: 'Famille',     total: 4, count: count2C },
-                { id: 'D' as const, label: 'Autres',      total: 3, count: count2D },
+                { id: 'A' as const, label: t('apply.identity.subA.label'), total: 6, count: count2A },
+                { id: 'B' as const, label: t('apply.identity.subB.label'), total: 5, count: count2B },
+                { id: 'C' as const, label: t('apply.identity.subC.label'), total: 6, count: count2C },
+                { id: 'D' as const, label: t('apply.identity.subD.label'), total: 3, count: count2D },
               ];
 
               const goSubNext = () => {
@@ -752,11 +753,11 @@ export function ApplicationFormPage() {
                     <div className="space-y-5">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900">Identité</h3>
-                          <p className="text-sm text-gray-500 mt-0.5">Informations d'état civil</p>
+                          <h3 className="text-xl font-bold text-gray-900">{t('apply.identity.subA.title')}</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">{t('apply.identity.subA.subtitle')}</p>
                         </div>
                         <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
-                          {count2A} / 6 complétés
+                          {count2A} / 6 {t('apply.identity.completed')}
                         </span>
                       </div>
 
@@ -777,9 +778,7 @@ export function ApplicationFormPage() {
 
                         <div className="space-y-2">
                           <Label htmlFor="dateNaissance">{t('apply.identity.birthDate')} <span className="text-destructive">*</span></Label>
-                          {config && (
-                            <p className="text-xs text-gray-400">Âge min. : <strong>{config.ageMinimum} ans</strong> au 1er jan. 2025</p>
-                          )}
+                         
                           <Input id="dateNaissance" type="date" value={formData.dateNaissance} className={errClass('dateNaissance')}
                             onChange={(e) => {
                               const val = e.target.value;
@@ -804,28 +803,15 @@ export function ApplicationFormPage() {
                         {/* Nationalité — toggle */}
                         <div className="space-y-2">
                           <Label>{t('apply.identity.nationality')} <span className="text-destructive">*</span></Label>
-                          <div className="flex gap-3">
-                            {(['Camerounaise', 'Étrangère'] as const).map((val) => (
-                              <button key={val} type="button"
-                                onClick={() => setFormData({ ...formData, nationalite: val })}
-                                className={[
-                                  'flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors',
-                                  formData.nationalite === val
-                                    ? 'border-[#0A2A66] bg-[#EFF6FF] text-[#0A2A66]'
-                                    : 'border-gray-200 text-gray-500 hover:border-gray-300',
-                                ].join(' ')}
-                              >
-                                {val === 'Camerounaise' ? ' Camerounais(e)' : ' Étranger(e)'}
-                              </button>
-                            ))}
-                          </div>
+                          <Input id="nationalite" value={formData.nationalite} className={errClass('nationalite')}
+                            onChange={(e) => { setFormData({ ...formData, nationalite: e.target.value }); clearFe('nationalite'); }} />
                         </div>
 
                         {/* Sexe — toggle */}
                         <div className="space-y-2">
-                          <Label>Sexe <span className="text-destructive">*</span></Label>
+                          <Label>{t('apply.identity.sexLabel')} <span className="text-destructive">*</span></Label>
                           <div className="flex gap-3">
-                            {([['M', 'Masculin'], ['F', ' Féminin']] as const).map(([val, label]) => (
+                            {(['M', 'F'] as const).map((val) => (
                               <button key={val} type="button"
                                 onClick={() => setFormData({ ...formData, sexe: val })}
                                 className={[
@@ -835,7 +821,7 @@ export function ApplicationFormPage() {
                                     : 'border-gray-200 text-gray-500 hover:border-gray-300',
                                 ].join(' ')}
                               >
-                                {label}
+                                {val === 'M' ? t('apply.identity.sexMale') : t('apply.identity.sexFemale')}
                               </button>
                             ))}
                           </div>
@@ -849,11 +835,11 @@ export function ApplicationFormPage() {
                     <div className="space-y-5">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900">Coordonnées</h3>
-                          <p className="text-sm text-gray-500 mt-0.5">Contact et localisation</p>
+                          <h3 className="text-xl font-bold text-gray-900">{t('apply.identity.subB.title')}</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">{t('apply.identity.subB.subtitle')}</p>
                         </div>
                         <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
-                          {count2B} / 5 complétés
+                          {count2B} / 5 {t('apply.identity.completed')}
                         </span>
                       </div>
 
@@ -905,17 +891,17 @@ export function ApplicationFormPage() {
                     <div className="space-y-5">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900">Famille</h3>
-                          <p className="text-sm text-gray-500 mt-0.5">Informations parentales</p>
+                          <h3 className="text-xl font-bold text-gray-900">{t('apply.identity.subC.title')}</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">{t('apply.identity.subC.subtitle')}</p>
                         </div>
                         <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
-                          {count2C} / 4 complétés
+                          {count2C} / 6 {t('apply.identity.completed')}
                         </span>
                       </div>
 
                       <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
                         <AlertCircle className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                        <p className="text-xs text-blue-700">Ces informations figurent sur la fiche officielle — leur saisie est recommandée mais optionnelle.</p>
+                        <p className="text-xs text-blue-700">Ces informations sont facultatives mais recommandées. / These fields are optional but recommended.</p>
                       </div>
 
                       <div className="space-y-5">
@@ -931,6 +917,11 @@ export function ApplicationFormPage() {
                               <Label htmlFor="regionPere">{t('apply.identity.fatherRegion')}</Label>
                               <Input id="regionPere" value={formData.regionPere}
                                 onChange={(e) => setFormData({ ...formData, regionPere: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="departementPere">{t('apply.identity.fatherDepartment')}</Label>
+                              <Input id="departementPere" value={formData.departementPere}
+                                onChange={(e) => setFormData({ ...formData, departementPere: e.target.value })} />
                             </div>
                           </div>
                         </div>
@@ -948,6 +939,11 @@ export function ApplicationFormPage() {
                               <Input id="regionMere" value={formData.regionMere}
                                 onChange={(e) => setFormData({ ...formData, regionMere: e.target.value })} />
                             </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="departementMere">{t('apply.identity.motherDepartment')}</Label>
+                              <Input id="departementMere" value={formData.departementMere}
+                                onChange={(e) => setFormData({ ...formData, departementMere: e.target.value })} />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -959,11 +955,11 @@ export function ApplicationFormPage() {
                     <div className="space-y-5">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900">Autres informations</h3>
-                          <p className="text-sm text-gray-500 mt-0.5">Situation et langue d'examen</p>
+                          <h3 className="text-xl font-bold text-gray-900">{t('apply.identity.subD.title')}</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">{t('apply.identity.subD.subtitle')}</p>
                         </div>
                         <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
-                          {count2D} / 3 complétés
+                          {count2D} / 3 {t('apply.identity.completed')}
                         </span>
                       </div>
 
@@ -1003,7 +999,7 @@ export function ApplicationFormPage() {
                                   : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white',
                               ].join(' ')}
                             >
-                              {l === 'FRANCAIS' ? '🇫 Français' : '🇬English'}
+                              {l === 'FRANCAIS' ? '🇫🇷 Français' : '🇬🇧 English'}
                             </button>
                           ))}
                         </div>
@@ -1026,45 +1022,54 @@ export function ApplicationFormPage() {
                   {subStep2 === 'summary' && (
                     <div className="space-y-4">
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900">Récapitulatif</h3>
-                        <p className="text-sm text-gray-500 mt-0.5">Vérifiez vos informations avant de continuer vers l'étape 3</p>
+                        <h3 className="text-xl font-bold text-gray-900">{t('apply.identity.summary.title')}</h3>
+                        <p className="text-sm text-gray-500 mt-0.5">{t('apply.identity.summary.subtitle')}</p>
                       </div>
 
                       {/* Bloc 2A */}
                       {[
                         {
-                          id: 'A', label: '2A — Identité', count: count2A, optional: false,
+                          id: 'A', label: t('apply.identity.summary.bloc2A'), count: count2A, optional: false,
                           onEdit: () => setSubStep2('A'),
                           rows: [
-                            ['Nom', formData.nom], ['Prénom', formData.prenom],
-                            ['Date de naissance', formData.dateNaissance], ['Lieu de naissance', formData.lieuNaissance],
-                            ['Nationalité', formData.nationalite], ['Sexe', formData.sexe === 'M' ? 'Masculin' : formData.sexe === 'F' ? 'Féminin' : ''],
+                            [t('apply.identity.lastName'), formData.nom],
+                            [t('apply.identity.firstName'), formData.prenom],
+                            [t('apply.identity.birthDate'), formData.dateNaissance],
+                            [t('apply.identity.birthPlace'), formData.lieuNaissance],
+                            [t('apply.identity.nationality'), formData.nationalite],
+                            [t('apply.identity.sexLabel'), formData.sexe === 'M' ? t('apply.identity.sexMale') : formData.sexe === 'F' ? t('apply.identity.sexFemale') : ''],
                           ],
                         },
                         {
-                          id: 'B', label: '2B — Coordonnées', count: count2B, optional: false,
+                          id: 'B', label: t('apply.identity.summary.bloc2B'), count: count2B, optional: false,
                           onEdit: () => setSubStep2('B'),
                           rows: [
-                            ['Téléphone', formData.telephone], ['Email', formData.email],
-                            ['Région', formData.region], ['Ville', formData.ville],
-                            ['Adresse académique', formData.adresseAnneeScolaire],
+                            [t('apply.identity.phone'), formData.telephone],
+                            ['Email', formData.email],
+                            [t('apply.identity.region'), formData.region],
+                            [t('apply.identity.city'), formData.ville],
+                            [t('apply.identity.academicAddress'), formData.adresseAnneeScolaire],
                           ],
                         },
                         {
-                          id: 'C', label: '2C — Famille', count: count2C, optional: true,
+                          id: 'C', label: t('apply.identity.summary.bloc2C'), count: count2C, optional: true,
                           onEdit: () => setSubStep2('C'),
                           rows: [
-                            ['Père', formData.nomPere], ['Région père', formData.regionPere],
-                            ['Mère', formData.nomMere], ['Région mère', formData.regionMere],
+                            [t('apply.identity.father'), formData.nomPere],
+                            [t('apply.identity.fatherRegion'), formData.regionPere],
+                            [t('apply.identity.fatherDepartment'), formData.departementPere],
+                            [t('apply.identity.mother'), formData.nomMere],
+                            [t('apply.identity.motherRegion'), formData.regionMere],
+                            [t('apply.identity.motherDepartment'), formData.departementMere],
                           ],
                         },
                         {
-                          id: 'D', label: '2D — Autres', count: count2D, optional: true,
+                          id: 'D', label: t('apply.identity.summary.bloc2D'), count: count2D, optional: true,
                           onEdit: () => setSubStep2('D'),
                           rows: [
-                            ['Situation', formData.situationMatrimoniale === 'CELIBATAIRE' ? 'Célibataire' : formData.situationMatrimoniale === 'MARIE' ? 'Marié(e)' : ''],
-                            ["Langue d'examen", formData.langueComposition === 'FRANCAIS' ? '🇫🇷 Français' : formData.langueComposition === 'ANGLAIS' ? '🇬🇧 English' : ''],
-                            ['Activités', formData.activitesExtraScolaires],
+                            [t('apply.identity.maritalStatus'), formData.situationMatrimoniale === 'CELIBATAIRE' ? t('apply.identity.single') : formData.situationMatrimoniale === 'MARIE' ? t('apply.identity.married') : ''],
+                            [t('apply.identity.examLanguage'), formData.langueComposition === 'FRANCAIS' ? '🇫🇷 Français' : formData.langueComposition === 'ANGLAIS' ? '🇬🇧 English' : ''],
+                            [t('apply.identity.activities'), formData.activitesExtraScolaires],
                           ],
                         },
                       ].map((bloc) => (
@@ -1076,12 +1081,12 @@ export function ApplicationFormPage() {
                               </span>
                               <span className="text-sm font-semibold text-gray-700">{bloc.label}</span>
                               {bloc.optional && bloc.count === 0 && (
-                                <span className="text-[11px] text-gray-400">(optionnel)</span>
+                                <span className="text-[11px] text-gray-400">({t('apply.identity.optional')})</span>
                               )}
                             </div>
                             <button type="button" onClick={bloc.onEdit}
                               className="text-xs text-[#0A2A66] font-semibold hover:underline">
-                              Modifier
+                              Modifier / Edit
                             </button>
                           </div>
                           <div className="px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-2">
@@ -1092,7 +1097,7 @@ export function ApplicationFormPage() {
                               </div>
                             ))}
                             {bloc.rows.every(([, v]) => !v) && (
-                              <p className="col-span-2 text-sm text-gray-400 italic">Aucune information saisie</p>
+                              <p className="col-span-2 text-sm text-gray-400 italic">{t('apply.identity.noInfo')}</p>
                             )}
                           </div>
                         </div>
@@ -1104,18 +1109,18 @@ export function ApplicationFormPage() {
                   <div className="flex items-center justify-between pt-5 border-t border-gray-100 mt-2">
                     <Button variant="outline" type="button" onClick={goSubPrev}>
                       <ChevronLeft className="w-4 h-4 mr-2" />
-                      {subStep2 === 'A' ? t('common.previous') : 'Précédent'}
+                      {t('common.previous')}
                     </Button>
 
                     {subStep2 === 'summary' ? (
                       <Button type="button" onClick={() => setCurrentStep(3)}
                         className="gap-2 bg-[#0A2A66] hover:bg-[#0A2A66]/90 text-white">
-                        Confirmer et continuer
+                        {t('apply.confirmContinue')}
                         <ChevronRight className="w-4 h-4" />
                       </Button>
                     ) : (
                       <Button type="button" onClick={goSubNext} className="gap-2">
-                        {subStep2 === 'D' ? 'Voir le récapitulatif' : 'Suivant'}
+                        {subStep2 === 'D' ? t('apply.seeRecap') : t('common.next')}
                         <ChevronRight className="w-4 h-4" />
                       </Button>
                     )}
@@ -1471,7 +1476,7 @@ export function ApplicationFormPage() {
                 onClick={handleNext}
                 className="shrink-0 gap-1.5 bg-[#0A2A66] hover:bg-[#0A2A66]/90 text-white"
               >
-                Continuer
+                {t('apply.continue')}
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
