@@ -105,6 +105,8 @@ const FILIERE_LABELS: Record<string, string> = {
   IPT_ALT: 'IPT — Alternance (Licence, Yaoundé)',
   IT:      'IT — Ingénieurs des Télécommunications (Master)',
   APT:     'APT — Administrateurs des Postes et Télécommunications (Master)',
+  ATT:     'ATT — Agents Techniques des Télécommunications',
+  AEPT:    "AEPT — Agents d'Exploitation des Postes et Télécommunications",
 };
 
 // ─── Service PDF ──────────────────────────────────────────────────────────────
@@ -129,7 +131,7 @@ export const pdfService = {
       doc.pipe(stream);
 
       // En-tête
-      drawHeader(doc, `FICHE DE CANDIDATURE — CONCOURS ${new Date().getFullYear()}`);
+      drawHeader(doc, `ACTE DE CANDIDATURE / APPLICATION FORM — CONCOURS ${new Date().getFullYear()}`);
 
       // Numéro candidat encadré
       doc.rect(50, doc.y, doc.page.width - 100, 32).stroke(COLORS.accent);

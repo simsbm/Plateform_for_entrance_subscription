@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Démarrage du seed...\n');
+  console.log(' Démarrage du seed...\n');
 
   // ─── 1. Centres de dépôt habilités ────────────────────────────────────────
   const centres = await Promise.all([
@@ -73,8 +73,9 @@ async function main() {
         telephone: '+237 233 66 66 66',
       },
     }),
+    
   ]);
-  console.log(`✅ ${centres.length} centres de dépôt créés`);
+  console.log(`${centres.length} centres de dépôt créés`);
 
   // ─── 2. Comptes utilisateurs (admin + agents + candidat démo) ─────────────
   const hash = (pwd: string) => bcrypt.hashSync(pwd, 12);
@@ -124,7 +125,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Comptes créés : admin, ${agentYde.email}, ${agentDla.email}, candidat démo`);
+  console.log(` Comptes créés : admin, ${agentYde.email}, ${agentDla.email}, candidat démo`);
 
   // ─── 3. Candidature démo (statut SOUMIS) ──────────────────────────────────
   const dejaExiste = await prisma.candidature.findUnique({
@@ -156,14 +157,14 @@ async function main() {
         statut:            'SOUMIS',
       },
     });
-    console.log('✅ Candidature démo créée (SUPP-2026-00001 — statut SOUMIS)');
+    console.log(' Candidature démo créée (SUPP-2026-00001 — statut SOUMIS)');
   } else {
     console.log('ℹ️  Candidature démo déjà présente, ignorée');
   }
 
   // ─── Résumé ───────────────────────────────────────────────────────────────
   console.log('\n─────────────────────────────────────────────');
-  console.log("🎉 Seed terminé !\n");
+  console.log("Seed terminé !\n");
   console.log("  Comptes de connexion :");
   console.log("  ┌─────────────────────────────────┬──────────────────┬──────────┐");
   console.log("  │ Email                           │ Mot de passe     │ Rôle     │");
@@ -177,5 +178,5 @@ async function main() {
 }
 
 main()
-  .catch((e) => { console.error('❌ Erreur seed :', e); process.exit(1); })
+  .catch((e) => { console.error(' Erreur seed :', e); process.exit(1); })
   .finally(() => prisma.$disconnect());
