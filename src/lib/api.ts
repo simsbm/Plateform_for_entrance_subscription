@@ -175,6 +175,49 @@ export const agentApi = {
     api.patch<ApiOk<Dossier>>(`/agent/dossiers/${id}/valider`, { statut, motifRejet }),
 };
 
+// ─── Endpoints Admin ──────────────────────────────────────────────────────────
+
+export interface AdminStats {
+  total: number;
+  parStatut: { EN_ATTENTE: number; SOUMIS: number; VALIDE: number; REJETE: number; ADMIS: number };
+  parFiliere: { filiere: string; count: number }[];
+  parRegion:  { region: string;  count: number }[];
+  montantTotal: number;
+  derniersInscrits: {
+    numeroCandidat: string; nom: string; prenom: string;
+    filiere: string; statut: string; region: string; createdAt: string;
+  }[];
+}
+
+export interface AdminCandidature {
+  id: string;
+  numeroCandidat: string;
+  nom: string; prenom: string; email: string; telephone: string;
+  region: string; filiere: string; statut: string;
+  montantPaye: number; createdAt: string;
+  centreDepot: { nom: string; ville: string } | null;
+}
+
+export const adminApi = {
+  stats: () =>
+    api.get<ApiOk<AdminStats>>('/admin/stats'),
+
+  candidatures: (params: {
+    page?: number; limit?: number;
+    search?: string; region?: string; filiere?: string; statut?: string;
+  }) => api.get<ApiOk<{ candidatures: AdminCandidature[]; total: number; page: number; limit: number }>>(
+    '/admin/candidatures', { params }
+  ),
+
+  exportUrl: (params: { region?: string; filiere?: string; statut?: string }) => {
+    const q = new URLSearchParams();
+    if (params.region)  q.set('region',  params.region);
+    if (params.filiere) q.set('filiere', params.filiere);
+    if (params.statut)  q.set('statut',  params.statut);
+    return `http://localhost:3000/api/admin/candidatures/export?${q.toString()}`;
+  },
+};
+
 // ─── Endpoints PDF ────────────────────────────────────────────────────────────
 export const pdfApi = {
   ficheCandidature: (candidatureId: string) =>

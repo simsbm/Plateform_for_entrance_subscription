@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -7,72 +7,105 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { GraduationCap, Users, CheckCircle, Clock, DollarSign, Search, Filter, Download, LogOut, TrendingUp } from 'lucide-react';
+import { Users, CheckCircle, Clock, DollarSign, Search, Download, LogOut, TrendingUp, XCircle, RefreshCw, UserCheck } from 'lucide-react';
+import { adminApi, AdminStats, AdminCandidature, getToken, clearAuth } from '../../lib/api';
+
+const FILIERE_COLORS: Record<string, string> = {
+  ITT: '#0A2A66', IPT: '#00AEEF', TT: '#FF7A00', CPT: '#10B981',
+  ITT_ALT: '#6366F1', IPT_ALT: '#EC4899', IT: '#F59E0B', APT: '#14B8A6',
+};
+
+const STATUT_LABELS: Record<string, string> = {
+  EN_ATTENTE: 'En attente', SOUMIS: 'Soumis', VALIDE: 'Validé', REJETE: 'Rejeté', ADMIS: 'Admis',
+};
+
+const STATUT_COLORS: Record<string, string> = {
+  EN_ATTENTE: 'bg-gray-400', SOUMIS: 'bg-blue-500',
+  VALIDE: 'bg-green-500',    REJETE: 'bg-red-500', ADMIS: 'bg-purple-500',
+};
 
 export function AdminDashboard() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterRegion, setFilterRegion] = useState('all');
-  const [filterProgram, setFilterProgram] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [stats, setStats]               = useState<AdminStats | null>(null);
+  const [candidatures, setCandidatures] = useState<AdminCandidature[]>([]);
+  const [total, setTotal]               = useState(0);
+  const [page, setPage]                 = useState(1);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
+  const [lastRefresh, setLastRefresh]   = useState(new Date());
 
-  // Mock statistics
-  const stats = [
-    { label: 'Total Candidates', value: '12,458', icon: Users, trend: '+12%', color: 'bg-primary' },
-    { label: 'Completed Registrations', value: '10,234', icon: CheckCircle, trend: '+8%', color: 'bg-green-500' },
-    { label: 'Payments Completed', value: '9,876', icon: DollarSign, trend: '+15%', color: 'bg-accent' },
-    { label: 'Pending Applications', value: '2,224', icon: Clock, trend: '-5%', color: 'bg-yellow-500' },
-  ];
+  const [search,  setSearch]  = useState('');
+  const [region,  setRegion]  = useState('all');
+  const [filiere, setFiliere] = useState('all');
+  const [statut,  setStatut]  = useState('all');
 
-  // Candidates by region
-  const regionData = [
-    { name: 'Centre', candidates: 3200 },
-    { name: 'Littoral', candidates: 2800 },
-    { name: 'West', candidates: 1900 },
-    { name: 'Northwest', candidates: 1400 },
-    { name: 'Southwest', candidates: 1300 },
-    { name: 'Adamawa', candidates: 850 },
-    { name: 'East', candidates: 600 },
-    { name: 'North', candidates: 408 },
-  ];
+  const LIMIT = 15;
 
-  // Candidates by program
-  const programData = [
-    { name: 'ITT', value: 4500, color: '#0A2A66' },
-    { name: 'IPT', value: 3200, color: '#00AEEF' },
-    { name: 'TT', value: 2800, color: '#FF7A00' },
-    { name: 'CPT', value: 1958, color: '#10B981' },
-  ];
+  const fetchStats = useCallback(async () => {
+    try {
+      const { data } = await adminApi.stats();
+      setStats(data.data);
+      setLastRefresh(new Date());
+    } catch {
+      // silencieux
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
 
-  // Mock candidate data
-  const candidates = [
-    { id: '0001234', name: 'Jean Dupont', region: 'Centre', program: 'ITT', payment: 'completed', status: 'approved' },
-    { id: '0001235', name: 'Marie Kamga', region: 'Littoral', program: 'IPT', payment: 'completed', status: 'approved' },
-    { id: '0001236', name: 'Paul Nkengue', region: 'West', program: 'TT', payment: 'pending', status: 'pending' },
-    { id: '0001237', name: 'Sophie Mbarga', region: 'Centre', program: 'CPT', payment: 'completed', status: 'approved' },
-    { id: '0001238', name: 'David Talla', region: 'Northwest', program: 'ITT', payment: 'completed', status: 'approved' },
-    { id: '0001239', name: 'Grace Ndi', region: 'Southwest', program: 'IPT', payment: 'pending', status: 'pending' },
-    { id: '0001240', name: 'Emmanuel Fotso', region: 'West', program: 'TT', payment: 'completed', status: 'approved' },
-    { id: '0001241', name: 'Ariane Njoh', region: 'Littoral', program: 'CPT', payment: 'completed', status: 'approved' },
-  ];
+  const fetchCandidatures = useCallback(async () => {
+    setTableLoading(true);
+    try {
+      const { data } = await adminApi.candidatures({
+        page,
+        limit: LIMIT,
+        search:  search  || undefined,
+        region:  region  !== 'all' ? region  : undefined,
+        filiere: filiere !== 'all' ? filiere : undefined,
+        statut:  statut  !== 'all' ? statut  : undefined,
+      });
+      setCandidatures(data.data.candidatures);
+      setTotal(data.data.total);
+    } catch {
+      // silencieux
+    } finally {
+      setTableLoading(false);
+    }
+  }, [page, search, region, filiere, statut]);
 
-  const filteredCandidates = candidates.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.id.includes(searchTerm);
-    const matchesRegion = filterRegion === 'all' || c.region === filterRegion;
-    const matchesProgram = filterProgram === 'all' || c.program === filterProgram;
-    const matchesStatus = filterStatus === 'all' || c.status === filterStatus;
-    return matchesSearch && matchesRegion && matchesProgram && matchesStatus;
-  });
+  // Chargement initial
+  useEffect(() => { fetchStats(); }, [fetchStats]);
+  useEffect(() => { fetchCandidatures(); }, [fetchCandidatures]);
 
-  const getStatusBadge = (status: string) => {
-    const config = {
-      approved: { className: 'bg-green-500', label: 'Approved' },
-      pending: { className: 'bg-yellow-500', label: 'Pending' },
-      rejected: { className: 'bg-red-500', label: 'Rejected' },
-      completed: { className: 'bg-green-500', label: 'Completed' },
-    };
-    const statusConfig = config[status as keyof typeof config] || config.pending;
-    return <Badge className={statusConfig.className}>{statusConfig.label}</Badge>;
+  // Auto-refresh stats toutes les 30 secondes
+  useEffect(() => {
+    const interval = setInterval(fetchStats, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchStats]);
+
+  // Reset page quand les filtres changent
+  useEffect(() => { setPage(1); }, [search, region, filiere, statut]);
+
+  const handleExport = () => {
+    const token = getToken();
+    const url = adminApi.exportUrl({
+      region:  region  !== 'all' ? region  : undefined,
+      filiere: filiere !== 'all' ? filiere : undefined,
+      statut:  statut  !== 'all' ? statut  : undefined,
+    });
+    // Téléchargement avec le token JWT
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `candidats-supptic-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+      });
   };
+
+  const handleLogout = () => { clearAuth(); };
+
+  const totalPages = Math.ceil(total / LIMIT);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
@@ -81,23 +114,22 @@ export function AdminDashboard() {
         <div className="max-w-[1600px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-18 h-18 bg-white rounded-lg flex items-center justify-center">
-                <img src="src\img\cropped-logo-supptic.png" alt="logo of supptic" />
+              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
+                <img src="/src/img/cropped-logo-supptic.png" alt="logo" className="w-10 h-10 object-contain" />
               </div>
               <div>
-                <h1 className="text-lg font-bold">SUPPTIC Admin Dashboard</h1>
-                <p className="text-xs text-blue-100">Administrative Management Portal</p>
+                <h1 className="text-lg font-bold">Tableau de bord Admin — SUP'PTIC</h1>
+                <p className="text-xs text-blue-100 flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3" />
+                  Dernière mise à jour : {lastRefresh.toLocaleTimeString('fr-FR')}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-medium">Administrator</p>
-                <p className="text-xs text-blue-100">admin@supptic.cm</p>
-              </div>
-              <Link to="/">
-                <Button variant="ghost" className="text-white hover:bg-white/20">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+              <p className="text-sm hidden md:block">admin@supptic.cm</p>
+              <Link to="/login">
+                <Button variant="ghost" className="text-white hover:bg-white/20" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4 mr-2" /> Déconnexion
                 </Button>
               </Link>
             </div>
@@ -105,176 +137,251 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto px-6 py-8">
-        {/* Statistics Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.label}
-                </CardTitle>
-                <div className={`w-10 h-10 ${stat.color} rounded-lg flex items-center justify-center`}>
-                  <stat.icon className="w-5 h-5 text-white" />
-                </div>
+      <div className="max-w-[1600px] mx-auto px-6 py-8 space-y-8">
+
+        {/* Cartes statistiques */}
+        {statsLoading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="animate-pulse"><CardContent className="h-24" /></Card>
+            ))}
+          </div>
+        ) : stats && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { label: 'Total candidats', value: stats.total, icon: Users, color: 'bg-primary', sub: 'inscrits sur la plateforme' },
+              { label: 'Dossiers soumis', value: stats.parStatut.SOUMIS, icon: CheckCircle, color: 'bg-blue-500', sub: 'en attente de dépôt physique' },
+              { label: 'Dossiers validés', value: stats.parStatut.VALIDE, icon: UserCheck, color: 'bg-green-500', sub: 'acceptés par un agent' },
+              { label: 'Montant collecté', value: `${stats.montantTotal.toLocaleString('fr-FR')} FCFA`, icon: DollarSign, color: 'bg-accent', sub: 'total des frais reçus' },
+            ].map((stat, i) => (
+              <Card key={i} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{stat.label}</CardTitle>
+                  <div className={`w-10 h-10 ${stat.color} rounded-lg flex items-center justify-center`}>
+                    <stat.icon className="w-5 h-5 text-white" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{stat.sub}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Statuts secondaires */}
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'En attente', value: stats.parStatut.EN_ATTENTE, icon: Clock, color: 'text-gray-500' },
+              { label: 'Rejetés',    value: stats.parStatut.REJETE,     icon: XCircle, color: 'text-red-500' },
+              { label: 'Admis',      value: stats.parStatut.ADMIS,      icon: TrendingUp, color: 'text-purple-500' },
+              { label: 'En attente + Soumis', value: stats.parStatut.EN_ATTENTE + stats.parStatut.SOUMIS, icon: Clock, color: 'text-yellow-500' },
+            ].map((s, i) => (
+              <Card key={i}>
+                <CardContent className="pt-4 flex items-center gap-3">
+                  <s.icon className={`w-6 h-6 ${s.color}`} />
+                  <div>
+                    <p className="text-2xl font-bold">{s.value}</p>
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Graphiques */}
+        {stats && (
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Bar chart — par région */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Candidats par région</CardTitle>
+                <CardDescription>Répartition géographique en temps réel</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-end justify-between">
-                  <div className="text-3xl font-bold">{stat.value}</div>
-                  <div className="flex items-center gap-1 text-sm text-green-600">
-                    <TrendingUp className="w-4 h-4" />
-                    <span>{stat.trend}</span>
-                  </div>
-                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={stats.parRegion}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="region" angle={-30} textAnchor="end" height={60} tick={{ fontSize: 11 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip formatter={(v) => [v, 'Candidats']} />
+                    <Bar dataKey="count" fill="#0A2A66" name="Candidats" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
-          ))}
-        </div>
 
-        {/* Charts Section */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          {/* Bar Chart - Candidates by Region */}
+            {/* Pie chart — par filière */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Candidats par filière</CardTitle>
+                <CardDescription>Répartition des inscriptions par programme</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={stats.parFiliere}
+                      dataKey="count"
+                      nameKey="filiere"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={({ filiere, percent }) => `${filiere}: ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {stats.parFiliere.map((entry, i) => (
+                        <Cell key={i} fill={FILIERE_COLORS[entry.filiere] ?? '#8884d8'} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v, n) => [v, n]} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Derniers inscrits */}
+        {stats && stats.derniersInscrits.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Candidates by Region</CardTitle>
-              <CardDescription>Distribution across all regions</CardDescription>
+              <CardTitle>Dernières inscriptions</CardTitle>
+              <CardDescription>Les 5 candidats inscrits le plus récemment</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={regionData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="candidates" fill="#0A2A66" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="space-y-2">
+                {stats.derniersInscrits.map((c, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-muted/40 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm">
+                        {c.prenom[0]}{c.nom[0]}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{c.prenom} {c.nom}</p>
+                        <p className="text-xs text-muted-foreground">{c.numeroCandidat} · {c.region}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{c.filiere}</Badge>
+                      <Badge className={`${STATUT_COLORS[c.statut]} text-white text-xs`}>
+                        {STATUT_LABELS[c.statut]}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
+        )}
 
-          {/* Pie Chart - Candidates by Program */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Candidates by Program</CardTitle>
-              <CardDescription>Program selection distribution</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={programData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {programData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Candidate Management Table */}
+        {/* Tableau des candidatures */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Candidate Management</CardTitle>
-                <CardDescription>Manage and filter all candidate applications</CardDescription>
+                <CardTitle>Gestion des candidatures</CardTitle>
+                <CardDescription>
+                  {total} candidat{total > 1 ? 's' : ''} — page {page} / {totalPages || 1}
+                </CardDescription>
               </div>
-              <Button>
-                <Download className="w-4 h-4 mr-2" />
-                Export Data
+              <Button onClick={handleExport} variant="outline">
+                <Download className="w-4 h-4 mr-2" /> Exporter CSV
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {/* Filters */}
+            {/* Filtres */}
             <div className="grid md:grid-cols-4 gap-4 mb-6">
               <div className="relative">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name or ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Nom, prénom, numéro..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              <Select value={filterRegion} onValueChange={setFilterRegion}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Region" />
-                </SelectTrigger>
+              <Select value={region} onValueChange={setRegion}>
+                <SelectTrigger><SelectValue placeholder="Région" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Regions</SelectItem>
-                  <SelectItem value="Centre">Centre</SelectItem>
-                  <SelectItem value="Littoral">Littoral</SelectItem>
-                  <SelectItem value="West">West</SelectItem>
-                  <SelectItem value="Northwest">Northwest</SelectItem>
-                  <SelectItem value="Southwest">Southwest</SelectItem>
+                  <SelectItem value="all">Toutes les régions</SelectItem>
+                  {['Adamaoua','Centre','Est','Extrême-Nord','Littoral','Nord','Nord-Ouest','Ouest','Sud','Sud-Ouest'].map(r => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Select value={filterProgram} onValueChange={setFilterProgram}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Program" />
-                </SelectTrigger>
+              <Select value={filiere} onValueChange={setFiliere}>
+                <SelectTrigger><SelectValue placeholder="Filière" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Programs</SelectItem>
-                  <SelectItem value="ITT">ITT</SelectItem>
-                  <SelectItem value="IPT">IPT</SelectItem>
-                  <SelectItem value="TT">TT</SelectItem>
-                  <SelectItem value="CPT">CPT</SelectItem>
+                  <SelectItem value="all">Toutes les filières</SelectItem>
+                  {['ITT','IPT','TT','CPT','ITT_ALT','IPT_ALT','IT','APT'].map(f => (
+                    <SelectItem key={f} value={f}>{f}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
+              <Select value={statut} onValueChange={setStatut}>
+                <SelectTrigger><SelectValue placeholder="Statut" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  {Object.entries(STATUT_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Table */}
+            {/* Tableau */}
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Candidate ID</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>Program</TableHead>
-                    <TableHead>Payment</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Numéro</TableHead>
+                    <TableHead>Nom complet</TableHead>
+                    <TableHead>Région</TableHead>
+                    <TableHead>Filière</TableHead>
+                    <TableHead>Centre</TableHead>
+                    <TableHead>Montant</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Date</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCandidates.map((candidate) => (
-                    <TableRow key={candidate.id}>
-                      <TableCell className="font-mono">SUPP-2026-{candidate.id}</TableCell>
-                      <TableCell className="font-medium">{candidate.name}</TableCell>
-                      <TableCell>{candidate.region}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{candidate.program}</Badge>
+                  {tableLoading ? (
+                    [...Array(5)].map((_, i) => (
+                      <TableRow key={i}>
+                        {[...Array(8)].map((_, j) => (
+                          <TableCell key={j}><div className="h-4 bg-muted animate-pulse rounded" /></TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : candidatures.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        Aucun candidat trouvé
                       </TableCell>
-                      <TableCell>{getStatusBadge(candidate.payment)}</TableCell>
-                      <TableCell>{getStatusBadge(candidate.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          View Details
-                        </Button>
+                    </TableRow>
+                  ) : candidatures.map(c => (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-mono text-xs">{c.numeroCandidat}</TableCell>
+                      <TableCell className="font-medium">{c.prenom} {c.nom}</TableCell>
+                      <TableCell className="text-sm">{c.region}</TableCell>
+                      <TableCell><Badge variant="outline">{c.filiere}</Badge></TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {c.centreDepot ? `${c.centreDepot.ville}` : '—'}
+                      </TableCell>
+                      <TableCell className="text-sm">{c.montantPaye.toLocaleString('fr-FR')} F</TableCell>
+                      <TableCell>
+                        <Badge className={`${STATUT_COLORS[c.statut]} text-white text-xs`}>
+                          {STATUT_LABELS[c.statut]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(c.createdAt).toLocaleDateString('fr-FR')}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -282,9 +389,22 @@ export function AdminDashboard() {
               </Table>
             </div>
 
-            <div className="mt-4 text-sm text-muted-foreground">
-              Showing {filteredCandidates.length} of {candidates.length} candidates
-            </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <p className="text-sm text-muted-foreground">
+                  {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)} sur {total} candidats
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 1}>
+                    Précédent
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}>
+                    Suivant
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
