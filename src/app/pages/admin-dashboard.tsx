@@ -6,9 +6,10 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, CheckCircle, Clock, DollarSign, Search, Download, LogOut, TrendingUp, XCircle, RefreshCw, UserCheck } from 'lucide-react';
-import { adminApi, AdminStats, AdminCandidature, getToken, clearAuth } from '../../lib/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Users, CheckCircle, Clock, DollarSign, Search, Download, LogOut, TrendingUp, XCircle, RefreshCw, UserCheck, Eye, Phone, Mail, MapPin, Building2 } from 'lucide-react';
+import { adminApi, AdminStats, AdminCandidature, AdminCandidatureDetail, getToken, clearAuth } from '../../lib/api';
 
 const FILIERE_COLORS: Record<string, string> = {
   ITT: '#0A2A66', IPT: '#00AEEF', TT: '#FF7A00', CPT: '#10B981',
@@ -32,6 +33,10 @@ export function AdminDashboard() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(true);
   const [lastRefresh, setLastRefresh]   = useState(new Date());
+  const [evolution, setEvolution]       = useState<{ date: string; count: number }[]>([]);
+  const [selectedCandidat, setSelectedCandidat] = useState<AdminCandidatureDetail | null>(null);
+  const [detailLoading, setDetailLoading]       = useState(false);
+  const [updatingStatut, setUpdatingStatut]     = useState(false);
 
   const [search,  setSearch]  = useState('');
   const [region,  setRegion]  = useState('all');
@@ -51,6 +56,39 @@ export function AdminDashboard() {
       setStatsLoading(false);
     }
   }, []);
+
+  const fetchEvolution = useCallback(async () => {
+    try {
+      const { data } = await adminApi.evolution(30);
+      setEvolution(data.data);
+    } catch {
+      // silencieux
+    }
+  }, []);
+
+  const openDetail = async (id: string) => {
+    setDetailLoading(true);
+    setSelectedCandidat(null);
+    try {
+      const { data } = await adminApi.candidatureDetail(id);
+      setSelectedCandidat(data.data);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleStatutChange = async (newStatut: string) => {
+    if (!selectedCandidat) return;
+    setUpdatingStatut(true);
+    try {
+      await adminApi.updateStatut(selectedCandidat.id, newStatut);
+      setSelectedCandidat(prev => prev ? { ...prev, statut: newStatut } : prev);
+      setCandidatures(prev => prev.map(c => c.id === selectedCandidat.id ? { ...c, statut: newStatut } : c));
+      fetchStats();
+    } finally {
+      setUpdatingStatut(false);
+    }
+  };
 
   const fetchCandidatures = useCallback(async () => {
     setTableLoading(true);
@@ -74,6 +112,7 @@ export function AdminDashboard() {
 
   // Chargement initial
   useEffect(() => { fetchStats(); }, [fetchStats]);
+  useEffect(() => { fetchEvolution(); }, [fetchEvolution]);
   useEffect(() => { fetchCandidatures(); }, [fetchCandidatures]);
 
   // Auto-refresh stats toutes les 30 secondes
@@ -85,22 +124,32 @@ export function AdminDashboard() {
   // Reset page quand les filtres changent
   useEffect(() => { setPage(1); }, [search, region, filiere, statut]);
 
-  const handleExport = () => {
+  const downloadCsv = (url: string, filename: string) => {
     const token = getToken();
-    const url = adminApi.exportUrl({
-      region:  region  !== 'all' ? region  : undefined,
-      filiere: filiere !== 'all' ? filiere : undefined,
-      statut:  statut  !== 'all' ? statut  : undefined,
-    });
-    // Téléchargement avec le token JWT
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.blob())
       .then(blob => {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `candidats-supptic-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = filename;
         a.click();
       });
+  };
+
+  const handleExport = () => {
+    const url = adminApi.exportUrl({
+      region:  region  !== 'all' ? region  : undefined,
+      filiere: filiere !== 'all' ? filiere : undefined,
+      statut:  statut  !== 'all' ? statut  : undefined,
+    });
+    const suffix = filiere !== 'all' ? `-${filiere}` : '';
+    downloadCsv(url, `candidats-supptic${suffix}-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+
+  const handleExportFiliere = (f?: string) => {
+    const url = adminApi.exportUrl({ filiere: f });
+    const suffix = f ? `-${f}` : '';
+    downloadCsv(url, `candidats-supptic${suffix}-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   const handleLogout = () => { clearAuth(); };
@@ -108,6 +157,7 @@ export function AdminDashboard() {
   const totalPages = Math.ceil(total / LIMIT);
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-secondary text-white border-b">
@@ -246,6 +296,61 @@ export function AdminDashboard() {
           </div>
         )}
 
+        {/* Graphique évolution temporelle */}
+        {evolution.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Évolution des inscriptions</CardTitle>
+              <CardDescription>Nombre d'inscriptions par jour sur les 30 derniers jours</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={evolution}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip labelFormatter={d => `Date : ${d}`} formatter={(v) => [v, 'Inscriptions']} />
+                  <Line type="monotone" dataKey="count" stroke="#0A2A66" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Inscriptions" />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Export rapide par filière */}
+        {stats && stats.parFiliere.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Export par filière</CardTitle>
+                  <CardDescription>Télécharger la liste CSV de chaque filière</CardDescription>
+                </div>
+                <Button onClick={() => handleExportFiliere()} variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" /> Exporter tout
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {stats.parFiliere.map(({ filiere: f, count }) => (
+                  <button
+                    key={f}
+                    onClick={() => handleExportFiliere(f)}
+                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/60 transition-colors text-left group"
+                  >
+                    <div>
+                      <p className="font-semibold text-sm">{f}</p>
+                      <p className="text-xs text-muted-foreground">{count} candidat{count > 1 ? 's' : ''}</p>
+                    </div>
+                    <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Derniers inscrits */}
         {stats && stats.derniersInscrits.length > 0 && (
           <Card>
@@ -348,6 +453,7 @@ export function AdminDashboard() {
                     <TableHead>Montant</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -366,7 +472,7 @@ export function AdminDashboard() {
                       </TableCell>
                     </TableRow>
                   ) : candidatures.map(c => (
-                    <TableRow key={c.id}>
+                    <TableRow key={c.id} className="hover:bg-muted/40">
                       <TableCell className="font-mono text-xs">{c.numeroCandidat}</TableCell>
                       <TableCell className="font-medium">{c.prenom} {c.nom}</TableCell>
                       <TableCell className="text-sm">{c.region}</TableCell>
@@ -382,6 +488,11 @@ export function AdminDashboard() {
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {new Date(c.createdAt).toLocaleDateString('fr-FR')}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => openDetail(c.id)}>
+                          <Eye className="w-4 h-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -409,5 +520,102 @@ export function AdminDashboard() {
         </Card>
       </div>
     </div>
+
+    {/* Modal détail candidat */}
+    <Dialog open={!!selectedCandidat || detailLoading} onOpenChange={(open) => { if (!open) setSelectedCandidat(null); }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {detailLoading ? 'Chargement...' : selectedCandidat ? `${selectedCandidat.prenom} ${selectedCandidat.nom}` : ''}
+          </DialogTitle>
+        </DialogHeader>
+
+        {detailLoading && (
+          <div className="space-y-3 animate-pulse">
+            {[...Array(6)].map((_, i) => <div key={i} className="h-8 bg-muted rounded" />)}
+          </div>
+        )}
+
+        {selectedCandidat && !detailLoading && (
+          <div className="space-y-6">
+            {/* Identité */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-2 text-sm"><Mail className="w-4 h-4 text-muted-foreground" />{selectedCandidat.email}</div>
+              <div className="flex items-center gap-2 text-sm"><Phone className="w-4 h-4 text-muted-foreground" />{selectedCandidat.telephone}</div>
+              <div className="flex items-center gap-2 text-sm"><MapPin className="w-4 h-4 text-muted-foreground" />{selectedCandidat.region}</div>
+              <div className="flex items-center gap-2 text-sm"><Building2 className="w-4 h-4 text-muted-foreground" />
+                {selectedCandidat.centreDepot ? `${selectedCandidat.centreDepot.nom} — ${selectedCandidat.centreDepot.ville}` : '—'}
+              </div>
+            </div>
+
+            <hr />
+
+            {/* Diplôme */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Diplôme</p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div><span className="text-muted-foreground">Type :</span> {selectedCandidat.typeDiplome ?? '—'}</div>
+                <div><span className="text-muted-foreground">Année :</span> {selectedCandidat.anneeObtention ?? '—'}</div>
+                <div className="col-span-2"><span className="text-muted-foreground">Établissement :</span> {selectedCandidat.etablissement ?? '—'}</div>
+                <div><span className="text-muted-foreground">Langue :</span> {selectedCandidat.langueComposition ?? '—'}</div>
+              </div>
+            </div>
+
+            <hr />
+
+            {/* Candidature */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Candidature</p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div><span className="text-muted-foreground">Numéro :</span> <span className="font-mono">{selectedCandidat.numeroCandidat}</span></div>
+                <div><span className="text-muted-foreground">Filière :</span> <Badge variant="outline">{selectedCandidat.filiere}</Badge></div>
+                <div><span className="text-muted-foreground">Montant :</span> {selectedCandidat.montantPaye.toLocaleString('fr-FR')} FCFA</div>
+                <div><span className="text-muted-foreground">N° reçu :</span> {selectedCandidat.numeroRecuCampost ?? '—'}</div>
+              </div>
+            </div>
+
+            <hr />
+
+            {/* Changer le statut */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase mb-3">Statut du dossier</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(STATUT_LABELS).map(([key, label]) => (
+                  <Button
+                    key={key}
+                    size="sm"
+                    variant={selectedCandidat.statut === key ? 'default' : 'outline'}
+                    disabled={updatingStatut}
+                    onClick={() => handleStatutChange(key)}
+                    className={selectedCandidat.statut === key ? `${STATUT_COLORS[key]} text-white border-0` : ''}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Documents */}
+            {selectedCandidat.documents.length > 0 && (
+              <>
+                <hr />
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Documents joints ({selectedCandidat.documents.length})</p>
+                  <div className="space-y-1">
+                    {selectedCandidat.documents.map(doc => (
+                      <div key={doc.id} className="flex items-center gap-2 text-sm p-2 bg-muted/40 rounded">
+                        <span className="font-medium">{doc.type}</span>
+                        <span className="text-muted-foreground text-xs">— {doc.nomFichier}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

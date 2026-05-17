@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { ok } from '../types';
+import { StatutDossier } from '@prisma/client';
 
 // GET /api/admin/stats
 export async function getAdminStats(_req: Request, res: Response) {
@@ -177,4 +178,58 @@ export async function exportCandidatures(req: Request, res: Response) {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.send('﻿' + csv);
+}
+
+// GET /api/admin/stats/evolution?days=30
+export async function getEvolution(req: Request, res: Response) {
+  const days = Math.min(Number(req.query.days ?? 30), 90);
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const rows = await prisma.$queryRaw<{ date: string; count: bigint }[]>`
+    SELECT TO_CHAR("createdAt"::date, 'YYYY-MM-DD') AS date,
+           COUNT(*)::bigint AS count
+    FROM "candidatures"
+    WHERE "createdAt" >= ${since}
+    GROUP BY "createdAt"::date
+    ORDER BY "createdAt"::date ASC
+  `;
+
+  res.json(ok(rows.map(r => ({ date: r.date, count: Number(r.count) }))));
+}
+
+// GET /api/admin/candidatures/:id
+export async function getCandidatureDetail(req: Request, res: Response) {
+  const candidature = await prisma.candidature.findUnique({
+    where: { id: String(req.params.id) },
+    include: {
+      centreDepot: true,
+      documents:   true,
+    },
+  });
+
+  if (!candidature) {
+    res.status(404).json({ success: false, message: 'Candidature introuvable' });
+    return;
+  }
+
+  res.json(ok(candidature));
+}
+
+// PATCH /api/admin/candidatures/:id/statut
+export async function updateStatut(req: Request, res: Response) {
+  const { statut } = req.body as { statut: StatutDossier };
+  const validStatuts: StatutDossier[] = ['EN_ATTENTE', 'SOUMIS', 'VALIDE', 'REJETE', 'ADMIS'];
+
+  if (!validStatuts.includes(statut)) {
+    res.status(400).json({ success: false, message: 'Statut invalide' });
+    return;
+  }
+
+  const candidature = await prisma.candidature.update({
+    where: { id: String(req.params.id) },
+    data:  { statut },
+  });
+
+  res.json(ok(candidature));
 }

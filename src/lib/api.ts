@@ -198,9 +198,25 @@ export interface AdminCandidature {
   centreDepot: { nom: string; ville: string } | null;
 }
 
+export interface AdminCandidatureDetail extends AdminCandidature {
+  dateNaissance: string | null;
+  lieuNaissance: string | null;
+  typeDiplome: string | null;
+  mention: string | null;
+  anneeObtention: number | null;
+  etablissement: string | null;
+  langueComposition: string | null;
+  numeroRecuCampost: string | null;
+  centreDepot: { id: string; nom: string; ville: string; adresse: string; telephone: string } | null;
+  documents: { id: string; type: string; nomFichier: string }[];
+}
+
 export const adminApi = {
   stats: () =>
     api.get<ApiOk<AdminStats>>('/admin/stats'),
+
+  evolution: (days = 30) =>
+    api.get<ApiOk<{ date: string; count: number }[]>>('/admin/stats/evolution', { params: { days } }),
 
   candidatures: (params: {
     page?: number; limit?: number;
@@ -208,6 +224,12 @@ export const adminApi = {
   }) => api.get<ApiOk<{ candidatures: AdminCandidature[]; total: number; page: number; limit: number }>>(
     '/admin/candidatures', { params }
   ),
+
+  candidatureDetail: (id: string) =>
+    api.get<ApiOk<AdminCandidatureDetail>>(`/admin/candidatures/${id}`),
+
+  updateStatut: (id: string, statut: string) =>
+    api.patch<ApiOk<AdminCandidature>>(`/admin/candidatures/${id}/statut`, { statut }),
 
   exportUrl: (params: { region?: string; filiere?: string; statut?: string }) => {
     const q = new URLSearchParams();
