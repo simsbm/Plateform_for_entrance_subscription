@@ -172,11 +172,35 @@
       "fatherSection": "Renseignements sur le père",
       "fatherName": "Nom du père",
       "fatherRegion": "Région du père",
+      "fatherDepartment": "Département du père",
       "fatherDept": "Département du père",
       "motherSection": "Renseignements sur la mère",
       "motherName": "Nom de la mère",
       "motherRegion": "Région de la mère",
-      "motherDept": "Département de la mère"
+      "motherDepartment": "Département de la mère",
+      "motherDept": "Département de la mère",
+      "subA": { "label": "Identité", "title": "Identité", "subtitle": "Informations d'état civil" },
+      "subB": { "label": "Coordonnées", "title": "Coordonnées", "subtitle": "Contact et localisation" },
+      "subC": { "label": "Famille", "title": "Famille", "subtitle": "Informations parentales" },
+      "subD": { "label": "Autres", "title": "Autres informations", "subtitle": "Situation et langue d'examen" },
+      "summary": {
+        "title": "Récapitulatif",
+        "subtitle": "Vérifiez vos informations avant de continuer vers l'étape 3",
+        "bloc2A": "2A — Identité",
+        "bloc2B": "2B — Coordonnées",
+        "bloc2C": "2C — Famille",
+        "bloc2D": "2D — Autres"
+      },
+      "completed": "complétés",
+      "optional": "optionnel",
+      "noInfo": "Aucune information saisie",
+      "sexMale": "Masculin",
+      "sexFemale": "Féminin",
+      "sexLabel": "Sexe",
+      "father": "Père",
+      "mother": "Mère",
+      "examLanguage": "Langue d'examen",
+      "activities": "Activités extra-scolaires"
     },
     "academic": {
       "title": "Informations académiques",
@@ -248,6 +272,14 @@
         "APT": {
           "nom": "Administrateurs des Postes et Télécommunications",
           "desc": "Formation Master en administration P&T, Yaoundé uniquement"
+        },
+        "ATT": {
+          "nom": "Agents Techniques des Télécommunications",
+          "desc": "Formation d'agents techniques télécoms — Niveau BEPC"
+        },
+        "AEPT": {
+          "nom": "Agents d'Exploitation des Postes et Télécoms",
+          "desc": "Formation d'agents d'exploitation P&T — Niveau BEPC"
         }
       }
     },
@@ -279,6 +311,9 @@
       "receiptPlaceholder": "Ex : 0012345678",
       "receiptHint": "Ce numéro figure sur le reçu remis par l'agent CAMPOST lors de votre versement."
     },
+    "continue": "Continuer",
+    "seeRecap": "Voir le récapitulatif",
+    "confirmContinue": "Confirmer et continuer",
     "submit": "Soumettre ma candidature",
     "submitting": "Soumission en cours…",
     "successToast": "Candidature soumise avec succès !",
@@ -404,6 +439,8 @@
     "ITT_ALT": "ITT Alternance",
     "IPT_ALT": "IPT Alternance",
     "IT":      "IT — Ingénieurs Télécom (Master)",
-    "APT":     "APT — Admins P&T (Master)"
+    "APT":     "APT — Admins P&T (Master)",
+    "ATT":     "ATT — Agents Techniques des Télécommunications",
+    "AEPT":    "AEPT — Agents d'Exploitation des Postes et Télécoms"
   }
 }

@@ -32,7 +32,21 @@ const CandidatureSchema = z.object({
   departementMere: z.string().optional(),
 
   // Infos académiques
-  typeDiplome:             z.enum(['BAC', 'GCE_AL', 'EQUIVALENT']),
+  typeDiplome: z.enum([
+    // Niveau BEPC / GCE O Level
+    'BEPC', 'GCE_OL', 'GCE_OL_TECH', 'CAP', 'CITY_GUILDS', 'ITC',
+    // Baccalauréat — séries scientifiques
+    'BAC_C', 'BAC_D', 'BAC_E', 'BAC_F', 'GCE_AL_SCI',
+    // Baccalauréat — séries littéraires / gestion
+    'BAC_A', 'BAC_B', 'BAC_G', 'BAC_H', 'GCE_AL',
+    // Niveau Master
+    'MAITRISE_MATHS', 'MAITRISE_PHYSIQUE',
+    'MASTER_TELECOM', 'MASTER_ELEC', 'MASTER_INFO',
+    'MASTER_LOGISTIQUE', 'MASTER_COMPTA', 'MASTER_MARKETING', 'MASTER_ADMIN',
+    'DIP_ITT', 'DIP_IPT', 'LICENCE_TELECOM',
+    // Générique (rétrocompatibilité)
+    'BAC', 'EQUIVALENT',
+  ]),
   serieBac:                z.string().optional(),
   anneeObtention:          z.coerce.number().int().min(2000).max(new Date().getFullYear()),
   etablissement:           z.string().min(3),
